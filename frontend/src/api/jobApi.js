@@ -26,6 +26,6 @@ export const getRecruiterJobs = async () => {
 
 export const getRecruiterDashboard = async () => {
     const response = await axiosInstance.get('/recruiter/dashboard');
-
+    console.log(response.data);
     return response.data;
 };

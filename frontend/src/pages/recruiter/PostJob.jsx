@@ -73,7 +73,17 @@ function PostJob() {
                         }
                         error={errors.title}
                     />
-
+                    <Input
+                        label="Company Name"
+                        placeholder="Enter company name"
+                        name="company"
+                        register={(name) =>
+                            register(name, {
+                                required: 'Company name is required',
+                            })
+                        }
+                        error={errors.company}
+                    />
                     <Input
                         label="Location"
                         placeholder="Enter location"

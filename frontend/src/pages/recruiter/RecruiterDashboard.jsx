@@ -24,10 +24,13 @@ function RecruiterDashboard() {
             const dashboardData = await getRecruiterDashboard();
 
             setStats({
-                postedJobs: dashboardData.postedJobs || 0,
-                totalApplications: dashboardData.totalApplications || 0,
-                shortlisted: dashboardData.shortlisted || 0,
-                interviews: dashboardData.interviews || 0,
+                postedJobs: dashboardData.stats?.totalJobs || 0,
+
+                totalApplications: dashboardData.stats?.totalApplications || 0,
+
+                shortlisted: dashboardData.stats?.shortlistedApplications || 0,
+
+                interviews: dashboardData.stats?.interviews || 0,
             });
 
             // Fetch recruiter jobs for recent jobs display
@@ -137,7 +140,7 @@ function RecruiterDashboard() {
                                 </p>
 
                                 <p className="text-blue-600 font-semibold mt-2">
-                                    {job.applicationCount || 0} Applications
+                                    Application Available
                                 </p>
                             </div>
                         ))}

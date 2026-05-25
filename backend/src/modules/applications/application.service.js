@@ -9,7 +9,11 @@ const createApplication = async (applicationData) => {
     });
 
     if (existingApplication) {
-        throw new Error('Already applied to this job');
+        const error = new Error('Already applied to this job');
+
+        error.statusCode = 400;
+
+        throw error;
     }
 
     const application = await Application.create(applicationData);
