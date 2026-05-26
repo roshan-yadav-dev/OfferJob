@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Application Shortlisted</title>
+    </head>
+
+    <body style="font-family: Arial; background-color: #f5f5f5; padding: 20px">
+        <div style="background: white; padding: 20px; border-radius: 10px">
+            <h2 style="color: green">Congratulations!</h2>
+
+            <p>Hello <strong th:text="${studentName}"></strong>,</p>
+
+            <p>You have been shortlisted for:</p>
+
+            <h3 th:text="${jobTitle}"></h3>
+
+            <p>Our recruitment team will contact you soon.</p>
+
+            <hr />
+
+            <p>Smart AI Job Portal</p>
+        </div>
+    </body>
+</html>

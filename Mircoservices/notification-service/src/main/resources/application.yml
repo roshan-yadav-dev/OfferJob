@@ -5,10 +5,6 @@ spring:
     application:
         name: notification-service
 
-    data:
-        mongodb:
-            uri: ${MONGODB_URI}
-
     mail:
         host: smtp.gmail.com
         port: 587
@@ -21,6 +17,8 @@ spring:
                     auth: true
                     starttls:
                         enable: true
+    mongodb:
+        uri: ${MONGODB_URI}
 
 management:
     endpoints:
