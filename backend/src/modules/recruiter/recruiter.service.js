@@ -1,4 +1,5 @@
 const Job = require('../jobs/job.model');
+
 const Application = require('../applications/application.model');
 
 // Get Recruiter Jobs
@@ -28,7 +29,9 @@ const getJobApplicants = async (recruiterId, jobId) => {
     })
         .populate('student', 'name email')
         .populate('job', 'title company')
-        .sort({ createdAt: -1 })
+        .sort({
+            createdAt: -1,
+        })
         .lean();
 
     return applications;
@@ -50,12 +53,16 @@ const getRecruiterDashboardStats = async (recruiterId) => {
 
     // Total Applications
     const totalApplications = await Application.countDocuments({
-        job: { $in: jobIds },
+        job: {
+            $in: jobIds,
+        },
     });
 
     // Shortlisted Applications
     const shortlistedApplications = await Application.countDocuments({
-        job: { $in: jobIds },
+        job: {
+            $in: jobIds,
+        },
         status: 'shortlisted',
     });
 
@@ -83,8 +90,9 @@ const updateApplicationStatus = async (recruiterId, applicationId, status) => {
     }
 
     // Find Application
-    const application =
-        await Application.findById(applicationId).populate('job');
+    const application = await Application.findById(applicationId)
+        .populate('job')
+        .populate('student', 'name email');
 
     if (!application) {
         throw new Error('Application not found');

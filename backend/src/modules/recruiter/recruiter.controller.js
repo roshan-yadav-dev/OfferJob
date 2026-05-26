@@ -36,7 +36,9 @@ const getDashboardStatsController = asyncHandler(async (req, res) => {
         stats,
     });
 });
-
+const {
+    sendApplicationStatusNotification,
+} = require('../../services/notificationService');
 // Update Application Status
 const updateApplicationStatusController = asyncHandler(async (req, res) => {
     const application = await updateApplicationStatus(
@@ -44,6 +46,16 @@ const updateApplicationStatusController = asyncHandler(async (req, res) => {
         req.params.applicationId,
         req.body.status,
     );
+
+    await sendApplicationStatusNotification({
+        to: application.student.email,
+
+        studentName: application.student.name,
+
+        jobTitle: application.job.title,
+
+        status: application.status.toUpperCase(),
+    });
 
     res.status(200).json({
         success: true,
