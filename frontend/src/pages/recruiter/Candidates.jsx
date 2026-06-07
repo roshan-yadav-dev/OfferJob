@@ -14,6 +14,7 @@ import {
 
 import { getRecruiterJobs } from '../../api/jobApi';
 import { handleApiError } from '../../utils/apiErrorHandler';
+import { resolveResumeUrl } from '../../utils/resolveResumeUrl';
 
 function Candidates() {
     const [applicants, setApplicants] = useState([]);
@@ -26,18 +27,34 @@ function Candidates() {
 
     const [updatingId, setUpdatingId] = useState(null);
 
+    const [error, setError] = useState(null);
+
+    // Sort applicants by AI score descending
+    const sortByAIScore = (applicantsList) => {
+        return [...applicantsList].sort((a, b) => {
+            const scoreA = a.aiScore ?? -1;
+            const scoreB = b.aiScore ?? -1;
+            return scoreB - scoreA;
+        });
+    };
+
     // Fetch applicants for selected job
     const fetchApplicants = useCallback(async (jobId) => {
         try {
             setLoading(true);
+            setError(null);
 
             const data = await getJobApplicants(jobId);
 
-            setApplicants(data.applications || data || []);
-        } catch (error) {
-            console.error(error);
+            const applicantsList = data.applications || data || [];
+            const sortedApplicants = sortByAIScore(applicantsList);
 
-            handleApiError(error, 'Failed to load applicants');
+            setApplicants(sortedApplicants);
+        } catch (error) {
+            const errorMsg =
+                error.response?.data?.message || 'Failed to load applicants';
+            setError(errorMsg);
+            handleApiError(error, errorMsg);
         } finally {
             setLoading(false);
         }
@@ -47,6 +64,7 @@ function Candidates() {
     const fetchRecruiterJobs = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
 
             const data = await getRecruiterJobs();
 
@@ -63,9 +81,11 @@ function Candidates() {
                 await fetchApplicants(firstJobId);
             }
         } catch (error) {
-            console.error(error);
-
-            handleApiError(error, 'Failed to load recruiter jobs');
+            const errorMsg =
+                error.response?.data?.message ||
+                'Failed to load recruiter jobs';
+            setError(errorMsg);
+            handleApiError(error, errorMsg);
         } finally {
             setLoading(false);
         }
@@ -98,17 +118,58 @@ function Candidates() {
                 ),
             );
         } catch (error) {
-            console.error(error);
-
             handleApiError(error, 'Failed to update status. Please try again.');
         } finally {
             setUpdatingId(null);
         }
     };
 
+    // View resume in new tab
+    const handleViewResume = (resumeUrl) => {
+        const normalizedResumeUrl = resolveResumeUrl(resumeUrl);
+
+        if (normalizedResumeUrl) {
+            window.open(normalizedResumeUrl, '_blank');
+        }
+    };
+
+    // Download resume
+    const handleDownloadResume = (resumeUrl, candidateName) => {
+        const normalizedResumeUrl = resolveResumeUrl(resumeUrl);
+
+        if (!normalizedResumeUrl) return;
+
+        try {
+            const link = document.createElement('a');
+            link.href = normalizedResumeUrl;
+            link.download = `${candidateName}_resume.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            handleApiError(error, 'Failed to download resume');
+        }
+    };
+
     // Loading state
     if (loading) {
         return <LoadingSpinner message="Loading candidates..." />;
+    }
+
+    if (error) {
+        return (
+            <div className="space-y-8">
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-800">
+                        Candidates 👨‍💻
+                    </h1>
+                </div>
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                    <p className="font-semibold">Error Loading Candidates</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -187,20 +248,45 @@ function Candidates() {
                                         {applicant.student?.email || 'No email'}
                                     </p>
 
+                                    {/* AI Match Score */}
+                                    <p className="font-semibold mt-2">
+                                        AI Match Score:{' '}
+                                        {applicant.aiScore != null ? (
+                                            <span
+                                                className={
+                                                    applicant.aiScore >= 0.75
+                                                        ? 'text-green-600'
+                                                        : applicant.aiScore >=
+                                                            0.5
+                                                          ? 'text-yellow-600'
+                                                          : 'text-red-600'
+                                                }
+                                            >
+                                                {(
+                                                    applicant.aiScore * 100
+                                                ).toFixed(2)}
+                                                %
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">
+                                                N/A
+                                            </span>
+                                        )}
+                                    </p>
+
+                                    {/* Status */}
                                     <p className="font-semibold text-blue-600 mt-2">
                                         Status:{' '}
                                         <span
-                                            className={`
-                                                ${
-                                                    applicant.status ===
-                                                    'shortlisted'
-                                                        ? 'text-green-600'
-                                                        : applicant.status ===
-                                                            'rejected'
-                                                          ? 'text-red-600'
-                                                          : 'text-yellow-600'
-                                                }
-                                            `}
+                                            className={
+                                                applicant.status ===
+                                                'shortlisted'
+                                                    ? 'text-green-600'
+                                                    : applicant.status ===
+                                                        'rejected'
+                                                      ? 'text-red-600'
+                                                      : 'text-yellow-600'
+                                            }
                                         >
                                             {applicant.status || 'Pending'}
                                         </span>
@@ -236,6 +322,34 @@ function Candidates() {
                                         Reject
                                     </Button>
                                 </div>
+
+                                {resolveResumeUrl(applicant.resumeUrl) && (
+                                    <div className="flex gap-3 pt-2 border-t border-gray-200">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() =>
+                                                handleViewResume(
+                                                    applicant.resumeUrl,
+                                                )
+                                            }
+                                        >
+                                            View Resume
+                                        </Button>
+
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() =>
+                                                handleDownloadResume(
+                                                    applicant.resumeUrl,
+                                                    applicant.student?.name ||
+                                                        'resume',
+                                                )
+                                            }
+                                        >
+                                            Download Resume
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </Card>
                     ))

@@ -12,18 +12,21 @@ import { handleApiError } from '../../utils/apiErrorHandler';
 function StudentApplications() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const fetchApplications = async () => {
         try {
             setLoading(true);
+            setError(null);
 
             const data = await getMyApplications();
 
             setApplications(data.applications || []);
         } catch (error) {
-            console.error(error);
-
-            handleApiError(error, 'Failed to load applications');
+            const errorMsg =
+                error.response?.data?.message || 'Failed to load applications';
+            setError(errorMsg);
+            handleApiError(error, errorMsg);
         } finally {
             setLoading(false);
         }
@@ -57,6 +60,22 @@ function StudentApplications() {
         return <LoadingSpinner message="Loading applications..." />;
     }
 
+    if (error) {
+        return (
+            <div className="space-y-8">
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-800">
+                        My Applications 📄
+                    </h1>
+                </div>
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                    <p className="font-semibold">Error Loading Applications</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
             <div>
@@ -77,51 +96,95 @@ function StudentApplications() {
                     icon="📭"
                 />
             ) : (
-                <Card>
-                    <div className="space-y-4">
-                        {applications.map((application) => (
-                            <div
-                                key={application._id || application.id}
-                                className="
-                                        flex
-                                        items-center
-                                        justify-between
-                                        border-b
-                                        pb-4
-                                        last:border-b-0
-                                    "
-                            >
-                                <div>
-                                    <h2 className="text-xl font-bold">
-                                        {application.job?.title || 'Job Title'}
-                                    </h2>
+                <div className="grid gap-6">
+                    {applications.map((application) => (
+                        <Card key={application._id || application.id}>
+                            <div className="space-y-4">
+                                {/* Header with Status */}
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                    <div className="flex-1">
+                                        <h2 className="text-2xl font-bold text-gray-900">
+                                            {application.job?.title ||
+                                                'Job Title'}
+                                        </h2>
 
-                                    <p className="text-gray-500">
-                                        Applied on{' '}
-                                        {new Date(
-                                            application.createdAt,
-                                        ).toLocaleDateString()}
-                                    </p>
-                                </div>
+                                        <p className="text-gray-600 mt-1">
+                                            {application.job?.company ||
+                                                'Company Name'}
+                                        </p>
+                                    </div>
 
-                                <span
-                                    className={`
+                                    <span
+                                        className={`
                                             ${getStatusColor(
                                                 application.status,
                                             )}
-                                            rounded-full
-                                            px-3
-                                            py-1
+                                            rounded-lg
+                                            px-4
+                                            py-2
                                             text-sm
-                                            font-medium
+                                            font-semibold
+                                            whitespace-nowrap
                                         `}
-                                >
-                                    {application.status || 'Pending'}
-                                </span>
+                                    >
+                                        {application.status || 'Applied'}
+                                    </span>
+                                </div>
+
+                                {/* Details Grid */}
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                                    <div>
+                                        <p className="text-gray-500 text-sm font-medium">
+                                            Applied Date
+                                        </p>
+                                        <p className="text-gray-900 font-semibold mt-1">
+                                            {new Date(
+                                                application.createdAt,
+                                            ).toLocaleDateString()}
+                                        </p>
+                                    </div>
+
+                                    {application.aiScore != null && (
+                                        <div>
+                                            <p className="text-gray-500 text-sm font-medium">
+                                                AI Match Score
+                                            </p>
+                                            <p
+                                                className={`
+                                                    font-semibold
+                                                    mt-1
+                                                    ${
+                                                        application.aiScore >=
+                                                        0.75
+                                                            ? 'text-green-600'
+                                                            : application.aiScore >=
+                                                                0.5
+                                                              ? 'text-yellow-600'
+                                                              : 'text-red-600'
+                                                    }
+                                                `}
+                                            >
+                                                {(
+                                                    application.aiScore * 100
+                                                ).toFixed(2)}
+                                                %
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <p className="text-gray-500 text-sm font-medium">
+                                            Job Location
+                                        </p>
+                                        <p className="text-gray-900 font-semibold mt-1">
+                                            {application.job?.location || 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                </Card>
+                        </Card>
+                    ))}
+                </div>
             )}
         </div>
     );

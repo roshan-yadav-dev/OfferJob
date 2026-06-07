@@ -1,12 +1,17 @@
 const mongoose = require('mongoose');
 const asyncHandler = require('../../utils/asyncHandler');
 
+const User = require('../users/user.model');
+
 const { createJob, getAllJobs, getJobById } = require('./job.service');
 
 // Create Job
 const createJobController = asyncHandler(async (req, res) => {
+    const recruiter = await User.findById(req.user._id);
+
     const jobData = {
         ...req.body,
+        company: recruiter?.companyName?.trim() || req.body.company,
         postedBy: req.user._id,
     };
 

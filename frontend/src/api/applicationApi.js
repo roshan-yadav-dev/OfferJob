@@ -1,11 +1,23 @@
 import axiosInstance from './axios';
 
 // Apply to a job
-export const applyToJob = async (jobId) => {
+export const applyToJob = async (jobId, resumeUrl) => {
     const { data } = await axiosInstance.post('/applications/apply', {
         jobId,
-        resumeUrl: localStorage.getItem('resumeUrl'),
+        resumeUrl: resumeUrl || localStorage.getItem('resumeUrl'),
     });
+
+    return data;
+};
+
+// Get pre-application AI match score
+export const getPreApplicationScore = async (jobId) => {
+    const { data } = await axiosInstance.post(
+        '/applications/pre-application-score',
+        {
+            jobId,
+        },
+    );
 
     return data;
 };
@@ -39,6 +51,13 @@ export const updateApplicationStatus = async (applicationId, status) => {
         `/recruiter/applications/${applicationId}/status`,
         { status },
     );
+
+    return data;
+};
+
+// Get student dashboard stats
+export const getStudentDashboard = async () => {
+    const { data } = await axiosInstance.get('/applications/student/dashboard');
 
     return data;
 };

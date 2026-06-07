@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import StatsCard from '../../components/dashboard/StatsCard';
 import Card from '../../components/common/Card';
 import { LoadingSpinner } from '../../components/common/LoadingStates';
@@ -10,15 +10,17 @@ function RecruiterDashboard() {
         postedJobs: 0,
         totalApplications: 0,
         shortlisted: 0,
-        interviews: 0,
+        rejected: 0,
     });
     const [recentJobs, setRecentJobs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Fetch dashboard data on mount
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
 
             // Fetch dashboard analytics
             const dashboardData = await getRecruiterDashboard();
@@ -30,7 +32,7 @@ function RecruiterDashboard() {
 
                 shortlisted: dashboardData.stats?.shortlistedApplications || 0,
 
-                interviews: dashboardData.stats?.interviews || 0,
+                rejected: dashboardData.stats?.rejectedApplications || 0,
             });
 
             // Fetch recruiter jobs for recent jobs display
@@ -41,14 +43,15 @@ function RecruiterDashboard() {
             setRecentJobs(jobs.slice(0, 5));
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
-            handleApiError(
-                error,
-                'Failed to load dashboard data. Please try again.',
-            );
+            const errorMsg =
+                error.response?.data?.message ||
+                'Failed to load dashboard data. Please try again.';
+            setError(errorMsg);
+            handleApiError(error, errorMsg);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchDashboardData();
@@ -56,6 +59,22 @@ function RecruiterDashboard() {
 
     if (loading) {
         return <LoadingSpinner message="Loading dashboard..." />;
+    }
+
+    if (error) {
+        return (
+            <div className="space-y-8">
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-800">
+                        Recruiter Dashboard 🚀
+                    </h1>
+                </div>
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                    <p className="font-semibold">Error Loading Dashboard</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -89,16 +108,25 @@ function RecruiterDashboard() {
                     gap-6
                 "
             >
-                <StatsCard title="Posted Jobs" value={stats.postedJobs} />
+                <StatsCard
+                    title="Posted Jobs"
+                    value={stats.postedJobs}
+                    icon="💼"
+                />
 
                 <StatsCard
                     title="Applications"
                     value={stats.totalApplications}
+                    icon="📋"
                 />
 
-                <StatsCard title="Shortlisted" value={stats.shortlisted} />
+                <StatsCard
+                    title="Shortlisted"
+                    value={stats.shortlisted}
+                    icon="✅"
+                />
 
-                <StatsCard title="Interviews" value={stats.interviews} />
+                <StatsCard title="Rejected" value={stats.rejected} icon="❌" />
             </div>
 
             {/* Recent Jobs */}

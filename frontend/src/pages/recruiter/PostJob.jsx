@@ -5,11 +5,16 @@ import toast from 'react-hot-toast';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+
+import { useAuth } from '../../context/AuthContext';
+
 import { createJob } from '../../api/jobApi';
 import { handleApiError } from '../../utils/apiErrorHandler';
 
 function PostJob() {
     const [loading, setLoading] = useState(false);
+
+    const { user } = useAuth();
 
     const {
         register,
@@ -30,8 +35,6 @@ function PostJob() {
             // Reset form
             reset();
         } catch (error) {
-            console.error('Failed to post job:', error);
-
             handleApiError(error, 'Failed to post job. Please try again.');
         } finally {
             setLoading(false);
@@ -62,6 +65,27 @@ function PostJob() {
 
             <Card>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    {user?.companyName && (
+                        <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                            <p className="text-sm text-blue-700">
+                                Posting as <strong>{user.companyName}</strong>
+                            </p>
+                        </div>
+                    )}
+
+                    {!user?.companyName && (
+                        <Input
+                            label="Company Name"
+                            placeholder="Enter company name"
+                            name="company"
+                            register={(name) =>
+                                register(name, {
+                                    required: 'Company name is required',
+                                })
+                            }
+                            error={errors.company}
+                        />
+                    )}
                     <Input
                         label="Job Title"
                         placeholder="Enter job title"
@@ -74,17 +98,6 @@ function PostJob() {
                         error={errors.title}
                     />
                     <Input
-                        label="Company Name"
-                        placeholder="Enter company name"
-                        name="company"
-                        register={(name) =>
-                            register(name, {
-                                required: 'Company name is required',
-                            })
-                        }
-                        error={errors.company}
-                    />
-                    <Input
                         label="Location"
                         placeholder="Enter location"
                         name="location"
@@ -95,7 +108,6 @@ function PostJob() {
                         }
                         error={errors.location}
                     />
-
                     <div className="flex flex-col gap-2">
                         <label className="font-medium text-gray-700">
                             Job Description
@@ -123,7 +135,6 @@ function PostJob() {
                             </p>
                         )}
                     </div>
-
                     <Input
                         label="Experience Required (years)"
                         type="number"
@@ -140,7 +151,6 @@ function PostJob() {
                         }
                         error={errors.experience}
                     />
-
                     <Input
                         label="Salary Range"
                         placeholder="e.g., 5-8 LPA"
@@ -152,7 +162,6 @@ function PostJob() {
                         }
                         error={errors.salary}
                     />
-
                     <Button
                         type="submit"
                         variant="primary"

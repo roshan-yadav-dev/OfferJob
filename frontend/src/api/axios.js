@@ -3,8 +3,10 @@ import toast from 'react-hot-toast';
 import { getToken, removeToken } from '../services/tokenService';
 import { extractErrorMessage } from '../utils/apiErrorHandler';
 
+const apiBaseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: apiBaseURL,
     withCredentials: true,
     timeout: 30000, // 30 second timeout
 });
@@ -42,16 +44,6 @@ axiosInstance.interceptors.request.use(
  */
 axiosInstance.interceptors.response.use(
     (response) => {
-        // Log response time in development
-        if (
-            process.env.NODE_ENV === 'development' &&
-            response.config.metadata
-        ) {
-            const duration = new Date() - response.config.metadata.startTime;
-            console.log(
-                `[API] ${response.config.method.toUpperCase()} ${response.config.url} (${duration}ms)`,
-            );
-        }
         return response;
     },
     (error) => {

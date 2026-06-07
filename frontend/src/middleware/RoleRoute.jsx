@@ -6,7 +6,7 @@ function RoleRoute({ children, role }) {
     const { user } = useAuth();
 
     if (user?.role !== role) {
-        return <Navigate to="/" />;
+        return <Navigate to="/forbidden" />;
     }
 
     return children;

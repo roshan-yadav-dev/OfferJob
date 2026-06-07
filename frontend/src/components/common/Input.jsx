@@ -1,4 +1,22 @@
-function Input({ label, type = 'text', placeholder, register, name, error }) {
+function Input({
+    label,
+    type = 'text',
+    placeholder,
+    register,
+    name,
+    error,
+    step,
+    min,
+    max,
+    ...rest
+}) {
+    const handleWheel = (e) => {
+        // Disable mouse wheel increment/decrement for number inputs
+        if (type === 'number') {
+            e.target.blur();
+        }
+    };
+
     return (
         <div className="flex flex-col gap-2 w-full">
             {label && (
@@ -8,7 +26,12 @@ function Input({ label, type = 'text', placeholder, register, name, error }) {
             <input
                 type={type}
                 placeholder={placeholder}
+                onWheel={handleWheel}
+                step={step}
+                min={min}
+                max={max}
                 {...register(name)}
+                {...rest}
                 className="
                     border
                     border-gray-300

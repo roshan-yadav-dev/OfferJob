@@ -1,0 +1,72 @@
+# Git and version control
+.git
+.gitignore
+.gitattributes
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Pre-trained models (cached during build, not needed in image)
+models/
+
+# Temporary files
+*.log
+*.tmp
+.env.local
+.env.*.local
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development and testing
+test_*.py
+conftest.py
+pytest.ini
+.mypy_cache/
+.flake8
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Project files
+.editorconfig
+.pre-commit-config.yaml
+Makefile
+
+# Docker files (don't copy docker files into docker image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore

@@ -65,8 +65,6 @@ export function AuthProvider({ children }) {
                 // OR direct user object
                 login(data.user || data);
             } catch (err) {
-                console.error(err);
-
                 // Token invalid or expired
                 logout();
             } finally {

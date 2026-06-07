@@ -4,6 +4,8 @@ const {
     applyToJobController,
     getJobApplicationsController,
     getMyApplicationsController,
+    getPreApplicationScoreController,
+    getStudentDashboardController,
 } = require('./application.controller');
 
 const protect = require('../../middleware/authMiddleware');
@@ -14,6 +16,14 @@ const router = express.Router();
 
 // Student Apply To Job
 router.post('/apply', protect, authorizeRoles('student'), applyToJobController);
+
+// Student Get Pre-Application AI Match Score
+router.post(
+    '/pre-application-score',
+    protect,
+    authorizeRoles('student'),
+    getPreApplicationScoreController,
+);
 
 // Recruiter View Applicants
 router.get(
@@ -29,6 +39,14 @@ router.get(
     protect,
     authorizeRoles('student'),
     getMyApplicationsController,
+);
+
+// Student Dashboard Stats
+router.get(
+    '/student/dashboard',
+    protect,
+    authorizeRoles('student'),
+    getStudentDashboardController,
 );
 
 module.exports = router;

@@ -4,12 +4,10 @@ const authRoutes = require('../modules/auth/auth.routes');
 const jobRoutes = require('../modules/jobs/job.routes');
 const router = express.Router();
 
-const testRoutes = require('./test.routes');
 const applicationRoutes = require('../modules/applications/application.routes');
 const uploadRoutes = require('./upload.routes');
 const recruiterRoutes = require('../modules/recruiter/recruiter.routes');
 
-router.use('/test', testRoutes);
 router.use('/auth', authRoutes);
 router.use('/jobs', jobRoutes);
 router.use('/applications', applicationRoutes);

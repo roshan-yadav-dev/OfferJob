@@ -61,13 +61,6 @@ function Sidebar() {
                         </Link>
 
                         <Link
-                            to="/student/resume"
-                            className="hover:text-blue-600"
-                        >
-                            Resume
-                        </Link>
-
-                        <Link
                             to="/student/profile"
                             className="hover:text-blue-600"
                         >

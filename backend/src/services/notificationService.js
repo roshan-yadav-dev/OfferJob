@@ -1,6 +1,8 @@
 const axios = require('axios');
+const env = require('../config/env');
+const logger = require('../config/logger');
 
-const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL;
+const NOTIFICATION_SERVICE_URL = env.NOTIFICATION_SERVICE_URL;
 
 const sendApplicationStatusNotification = async ({
     to,
@@ -17,9 +19,17 @@ const sendApplicationStatusNotification = async ({
                 jobTitle,
                 status,
             },
+            {
+                timeout: 5000,
+            },
         );
     } catch (error) {
-        console.error('Notification service error:', error.message);
+        logger.error('Failed to send application status notification', {
+            to,
+            job_title: jobTitle,
+            status,
+            error_message: error.message,
+        });
     }
 };
 

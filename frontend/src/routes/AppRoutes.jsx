@@ -5,6 +5,7 @@ import MainLayout from '../layouts/MainLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 
 /* Common Pages */
+import LandingPage from '../pages/common/LandingPage';
 import Home from '../pages/common/Home';
 import Jobs from '../pages/common/Jobs';
 
@@ -12,11 +13,16 @@ import Jobs from '../pages/common/Jobs';
 import Login from '../pages/auth/Login';
 import Signup from '../pages/auth/Signup';
 
+/* Error Pages */
+import NotFound404 from '../pages/errors/NotFound404';
+import Unauthorized401 from '../pages/errors/Unauthorized401';
+import Forbidden403 from '../pages/errors/Forbidden403';
+import ServerError500 from '../pages/errors/ServerError500';
+
 /* Student Pages */
 import StudentDashboard from '../pages/student/StudentDashboard';
 import StudentJobs from '../pages/student/StudentJobs';
 import StudentApplications from '../pages/student/StudentApplications';
-import StudentResume from '../pages/student/StudentResume';
 import StudentProfile from '../pages/student/StudentProfile';
 
 /* Recruiter Pages */
@@ -39,7 +45,7 @@ function AppRoutes() {
                 path="/"
                 element={
                     <MainLayout>
-                        <Home />
+                        <LandingPage />
                     </MainLayout>
                 }
             />
@@ -105,19 +111,6 @@ function AppRoutes() {
                         <RoleRoute role="student">
                             <DashboardLayout>
                                 <StudentApplications />
-                            </DashboardLayout>
-                        </RoleRoute>
-                    </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/student/resume"
-                element={
-                    <ProtectedRoute>
-                        <RoleRoute role="student">
-                            <DashboardLayout>
-                                <StudentResume />
                             </DashboardLayout>
                         </RoleRoute>
                     </ProtectedRoute>
@@ -200,6 +193,45 @@ function AppRoutes() {
                             </DashboardLayout>
                         </RoleRoute>
                     </ProtectedRoute>
+                }
+            />
+
+            {/* Error Pages */}
+
+            <Route
+                path="/unauthorized"
+                element={
+                    <MainLayout>
+                        <Unauthorized401 />
+                    </MainLayout>
+                }
+            />
+
+            <Route
+                path="/forbidden"
+                element={
+                    <MainLayout>
+                        <Forbidden403 />
+                    </MainLayout>
+                }
+            />
+
+            <Route
+                path="/server-error"
+                element={
+                    <MainLayout>
+                        <ServerError500 />
+                    </MainLayout>
+                }
+            />
+
+            {/* Catch-all 404 Route */}
+            <Route
+                path="*"
+                element={
+                    <MainLayout>
+                        <NotFound404 />
+                    </MainLayout>
                 }
             />
         </Routes>

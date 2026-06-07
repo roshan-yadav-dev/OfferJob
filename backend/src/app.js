@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const mongoose = require('mongoose');
 const routes = require('./routes');
 
 const app = express();
@@ -20,10 +21,10 @@ app.use(
 );
 
 // Middleware
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 app.use(
     cors({
-        origin: 'http://localhost:5173',
-
+        origin: [corsOrigin, 'http://localhost:5173'],
         credentials: true,
     }),
 );
@@ -33,6 +34,17 @@ app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Test Route
+app.get('/health', (req, res) => {
+    const databaseConnected = mongoose.connection.readyState === 1;
+
+    res.status(databaseConnected ? 200 : 503).json({
+        success: databaseConnected,
+        status: databaseConnected ? 'ok' : 'degraded',
+        service: 'backend',
+        database: databaseConnected ? 'connected' : 'disconnected',
+    });
+});
+
 app.get('/', (req, res) => {
     res.json({
         success: true,

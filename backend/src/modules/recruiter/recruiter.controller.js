@@ -6,6 +6,9 @@ const {
     getRecruiterDashboardStats,
     updateApplicationStatus,
 } = require('./recruiter.service');
+const {
+    sendApplicationStatusNotification,
+} = require('../../services/notificationService');
 
 // Get Recruiter Jobs
 const getRecruiterJobsController = asyncHandler(async (req, res) => {
@@ -36,9 +39,7 @@ const getDashboardStatsController = asyncHandler(async (req, res) => {
         stats,
     });
 });
-const {
-    sendApplicationStatusNotification,
-} = require('../../services/notificationService');
+
 // Update Application Status
 const updateApplicationStatusController = asyncHandler(async (req, res) => {
     const application = await updateApplicationStatus(

@@ -34,15 +34,13 @@ function Signup() {
 
             toast.success('Signup successful');
 
-            // Redirect to dashboard based on role
+            // Redirect to profile based on role for first-time profile completion
             if (response.user.role === 'recruiter') {
-                navigate('/recruiter/dashboard');
+                navigate('/recruiter/profile');
             } else {
-                navigate('/student/dashboard');
+                navigate('/student/profile');
             }
         } catch (error) {
-            console.error(error);
-
             // Handle backend validation errors
             if (error.response?.data?.message) {
                 toast.error(error.response.data.message);

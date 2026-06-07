@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+    # Smart AI Matching Service (FastAPI)
+    ai-service:
+        build:
+            context: ./ai-layer
+            dockerfile: Dockerfile.prod
+        container_name: job-platform-ai-service
+        environment:
+            LOG_LEVEL: INFO
+            DEBUG: 'false'
+            PORT: 8000
+            HOST: 0.0.0.0
+            MODEL_NAME: all-MiniLM-L6-v2
+            MODEL_CACHE_DIR: /app/models
+            PRELOAD_MODELS_ON_STARTUP: 'true'
+            CORS_ORIGINS: '["http://backend:5000", "http://frontend:3000", "http://localhost:3000", "http://localhost:5000"]'
+        ports:
+            - '8000:8000'
+        volumes:
+            - ai_models:/app/models
+            - ai_logs:/app/logs
+        networks:
+            - job-platform
+        healthcheck:
+            test: curl -f http://localhost:8000/api/v1/ai/health || exit 1
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 60s
+
+    # Spring Boot Notification Service
+    notification-service:
+        build:
+            context: ./Mircoservices/notification-service
+            dockerfile: Dockerfile
+        container_name: job-platform-notification-service
+        env_file:
+            - ./Mircoservices/notification-service/.env
+        environment:
+            MONGODB_URI: mongodb+srv://Roshan:Roshan@cluster0.fie3eke.mongodb.net/notification_service
+            MONGODB_DATABASE: notification_service
+        ports:
+            - '8082:8082'
+        networks:
+            - job-platform
+        healthcheck:
+            test: curl -f http://localhost:8082/health || exit 1
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 60s
+
+    # Backend Service (Node.js + Express)
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        container_name: job-platform-backend
+        env_file:
+            - ./backend/.env
+        environment:
+            NODE_ENV: production
+            PORT: 5000
+            CORS_ORIGIN: http://frontend:3000
+            AI_SERVICE_URL: http://ai-service:8000/api/v1/ai
+            AI_SERVICE_TIMEOUT: 30000
+            AI_SERVICE_MAX_RETRIES: 2
+            AI_SERVICE_RETRY_DELAY: 1000
+            LOG_LEVEL: INFO
+            NOTIFICATION_SERVICE_URL: http://notification-service:8082
+        ports:
+            - '5000:5000'
+        depends_on:
+            ai-service:
+                condition: service_healthy
+            notification-service:
+                condition: service_healthy
+        networks:
+            - job-platform
+        volumes:
+            - ./backend/uploads:/app/uploads
+            - backend_logs:/app/logs
+
+    # Frontend Service (React + Vite)
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+            args:
+                VITE_API_URL: http://backend:5000/api
+        container_name: job-platform-frontend
+        environment:
+            VITE_API_URL: http://backend:5000/api
+        ports:
+            - '3000:3000'
+        depends_on:
+            backend:
+                condition: service_healthy
+        networks:
+            - job-platform
+        healthcheck:
+            test: curl -f http://localhost:3000 || exit 1
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+
+volumes:
+    ai_models:
+    ai_logs:
+    backend_logs:
+
+networks:
+    job-platform:
+        driver: bridge

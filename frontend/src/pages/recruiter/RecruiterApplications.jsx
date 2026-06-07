@@ -43,11 +43,6 @@ function RecruiterApplications() {
                             applications,
                         };
                     } catch (error) {
-                        console.error(
-                            `Failed to fetch applications for job ${job._id}`,
-                            error,
-                        );
-
                         return {
                             ...job,
                             applicationCount: 0,
@@ -59,8 +54,6 @@ function RecruiterApplications() {
 
             setJobsWithApplications(jobsWithApps);
         } catch (error) {
-            console.error(error);
-
             handleApiError(error, 'Failed to load applications');
         } finally {
             setLoading(false);

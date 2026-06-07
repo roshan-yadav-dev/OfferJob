@@ -27,6 +27,63 @@ const userSchema = new mongoose.Schema(
             enum: ['student', 'recruiter', 'admin'],
             default: 'student',
         },
+
+        resumeUrl: {
+            type: String,
+            default: null,
+        },
+
+        // Student Profile Fields
+        collegeName: {
+            type: String,
+            default: null,
+        },
+
+        currentCGPA: {
+            type: Number,
+            default: null,
+        },
+
+        currentSemester: {
+            type: Number,
+            default: null,
+        },
+
+        passoutYear: {
+            type: Number,
+            default: null,
+        },
+
+        mobileNumber: {
+            type: String,
+            default: null,
+        },
+
+        city: {
+            type: String,
+            default: null,
+        },
+
+        state: {
+            type: String,
+            default: null,
+        },
+
+        // Recruiter Profile Fields
+        companyName: {
+            type: String,
+            default: null,
+        },
+
+        currentPosition: {
+            type: String,
+            default: null,
+        },
+
+        address: {
+            type: String,
+            default: null,
+        },
     },
     {
         timestamps: true,

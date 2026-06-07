@@ -17,3 +17,9 @@ export const getCurrentUser = async () => {
 
     return response.data;
 };
+
+export const updateUserProfile = async (data) => {
+    const response = await axiosInstance.patch('/auth/profile', data);
+
+    return response.data;
+};

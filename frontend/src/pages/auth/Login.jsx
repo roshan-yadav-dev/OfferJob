@@ -44,8 +44,6 @@ function Login() {
                 navigate('/student/dashboard');
             }
         } catch (error) {
-            console.error(error);
-
             // Handle backend validation errors
             if (error.response?.data?.message) {
                 toast.error(error.response.data.message);
