@@ -15,6 +15,7 @@ const updateUserProfile = async (userId, profileData) => {
         'currentPosition',
         'address',
         'resumeUrl',
+        'resumePublicId',
     ];
 
     const updateData = {};

@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema(
             default: null,
         },
 
+        resumePublicId: {
+            type: String,
+            default: null,
+        },
+
         // Student Profile Fields
         collegeName: {
             type: String,

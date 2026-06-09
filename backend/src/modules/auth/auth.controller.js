@@ -21,6 +21,7 @@ const register = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 resumeUrl: user.resumeUrl,
+                resumePublicId: user.resumePublicId,
             },
         });
     } catch (error) {
@@ -50,6 +51,7 @@ const login = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 resumeUrl: user.resumeUrl,
+                resumePublicId: user.resumePublicId,
                 mobileNumber: user.mobileNumber,
                 city: user.city,
                 state: user.state,

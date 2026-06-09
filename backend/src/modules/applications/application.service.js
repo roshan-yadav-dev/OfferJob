@@ -7,9 +7,10 @@ const logger = require('../../config/logger');
 const { extractResumeText } = require('../../services/resumeTextExtractor');
 const { matchResumeToJob } = require('../../services/aiMatchingService');
 
-const RESUME_UPLOAD_DIR = path.resolve(__dirname, '../../../uploads/resumes');
+// Note: Resume URLs are now Cloudinary URLs (secure_url from Cloudinary API)
+// No longer using local file storage
 
-function resolveResumeFilePath(resumeReference) {
+function validateResumeUrl(resumeReference) {
     if (!resumeReference || typeof resumeReference !== 'string') {
         return null;
     }
@@ -20,41 +21,24 @@ function resolveResumeFilePath(resumeReference) {
         return null;
     }
 
-    let pathname = trimmedReference.split('?')[0].split('#')[0];
-
+    // Return the trimmed URL - it should be a Cloudinary secure URL
     try {
-        pathname = new URL(trimmedReference).pathname;
+        // Basic URL validation
+        new URL(trimmedReference);
+        return trimmedReference;
     } catch (error) {
-        // Keep the raw path for relative references.
-    }
-
-    let resumeFileName = path.basename(pathname);
-
-    try {
-        resumeFileName = decodeURIComponent(resumeFileName);
-    } catch (error) {
-        // Keep the raw filename if it is not URI encoded.
-    }
-
-    resumeFileName = path.basename(resumeFileName);
-
-    if (
-        !resumeFileName ||
-        resumeFileName === '.' ||
-        resumeFileName === '..' ||
-        resumeFileName === path.sep
-    ) {
+        logger.warn('Invalid resume URL format', {
+            resume_reference: resumeReference,
+        });
         return null;
     }
-
-    return path.join(RESUME_UPLOAD_DIR, resumeFileName);
 }
 
 async function extractResumeTextFromReference(resumeReference, context) {
-    const resumeFilePath = resolveResumeFilePath(resumeReference);
+    const resumeUrl = validateResumeUrl(resumeReference);
 
-    if (!resumeFilePath) {
-        logger.warn('Unable to resolve resume file path for AI matching', {
+    if (!resumeUrl) {
+        logger.warn('Unable to validate resume URL for AI matching', {
             ...context,
             resume_reference: resumeReference,
         });
@@ -63,15 +47,13 @@ async function extractResumeTextFromReference(resumeReference, context) {
     }
 
     try {
-        await fs.access(resumeFilePath);
-
-        const resumeText = await extractResumeText(resumeFilePath);
+        const resumeText = await extractResumeText(resumeUrl);
         const cleanResumeText = resumeText?.trim();
 
         if (!cleanResumeText) {
             logger.warn('Resume text extraction returned empty content', {
                 ...context,
-                resume_file_path: resumeFilePath,
+                resume_url: resumeUrl,
             });
 
             return null;
@@ -79,7 +61,7 @@ async function extractResumeTextFromReference(resumeReference, context) {
 
         logger.info('Resume text extracted for AI matching', {
             ...context,
-            resume_file_path: resumeFilePath,
+            resume_url: resumeUrl,
             resume_text_length: cleanResumeText.length,
         });
 
@@ -87,7 +69,7 @@ async function extractResumeTextFromReference(resumeReference, context) {
     } catch (error) {
         logger.error('Resume text extraction failed', {
             ...context,
-            resume_file_path: resumeFilePath,
+            resume_url: resumeUrl,
             error_name: error.name,
             error_message: error.message,
         });

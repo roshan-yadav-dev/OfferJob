@@ -56,11 +56,15 @@ function ResumeUpload() {
             });
 
             const uploadedUrl = data.resumeUrl || data.url;
+            const publicId = data.resumePublicId;
 
             setResumeUrl(uploadedUrl);
 
-            // Store resume globally
+            // Store resume metadata globally
             localStorage.setItem('resumeUrl', uploadedUrl);
+            if (publicId) {
+                localStorage.setItem('resumePublicId', publicId);
+            }
 
             toast.success('Resume uploaded successfully');
         } catch (error) {

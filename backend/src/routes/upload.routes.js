@@ -1,9 +1,9 @@
 const express = require('express');
 
 const upload = require('../middleware/uploadMiddleware');
-
 const protect = require('../middleware/authMiddleware');
 const User = require('../modules/users/user.model');
+const { uploadResume } = require('../services/resumeUploadService');
 
 const router = express.Router();
 
@@ -17,14 +17,19 @@ router.post('/resume', protect, upload.single('resume'), async (req, res) => {
             });
         }
 
-        const publicBaseUrl = `${req.protocol}://${req.get('host')}`;
-        const encodedFileName = encodeURIComponent(req.file.filename);
-        const publicResumeUrl = `${publicBaseUrl}/uploads/resumes/${encodedFileName}`;
+        // Upload resume to Cloudinary
+        const uploadResult = await uploadResume(
+            req.file.buffer,
+            req.file.originalname,
+        );
 
-        // Persist resumeUrl to authenticated user's document
+        // Persist resumeUrl and resumePublicId to authenticated user's document
         const user = await User.findByIdAndUpdate(
             req.user._id,
-            { resumeUrl: publicResumeUrl },
+            {
+                resumeUrl: uploadResult.secure_url,
+                resumePublicId: uploadResult.public_id,
+            },
             { new: true, runValidators: true },
         );
 
@@ -38,7 +43,8 @@ router.post('/resume', protect, upload.single('resume'), async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Resume uploaded successfully',
-            resumeUrl: publicResumeUrl,
+            resumeUrl: uploadResult.secure_url,
+            resumePublicId: uploadResult.public_id,
         });
     } catch (error) {
         res.status(500).json({

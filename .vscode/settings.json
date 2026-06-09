@@ -1,5 +1,5 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive",
-    "cSpell.words": ["CGPA", "jobportal", "passout"]
+    "cSpell.words": ["CGPA", "Jage", "jobportal", "noreferrer", "passout"]
 }
