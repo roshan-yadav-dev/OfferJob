@@ -34,9 +34,10 @@ if [ "$RELOAD" = "true" ]; then
         --reload
 fi
 
-exec uvicorn \
+exec python -m uvicorn \
     app.main:app \
     --host "$HOST" \
     --port "$PORT" \
     --workers "$WORKERS" \
-    --log-level "$LOG_LEVEL"
+    --log-level "$LOG_LEVEL"\
+    --reload 
