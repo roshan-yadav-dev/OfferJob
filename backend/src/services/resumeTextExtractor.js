@@ -1,8 +1,12 @@
-const fs = require('fs');
+const axios = require('axios');
 const pdfParse = require('pdf-parse');
 
-const extractResumeText = async (filePath) => {
-    const buffer = fs.readFileSync(filePath);
+const extractResumeText = async (resumeUrl) => {
+    const response = await axios.get(resumeUrl, {
+        responseType: 'arraybuffer',
+    });
+
+    const buffer = Buffer.from(response.data);
 
     const data = await pdfParse(buffer);
 
