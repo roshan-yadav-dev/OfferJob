@@ -65,21 +65,23 @@ public class EmailServiceImpl implements EmailService {
 
         } catch (Exception ex) {
 
+    System.err.println("GENERIC EMAIL ERROR");
     ex.printStackTrace();
 
     logService.saveLog(
             request.getTo(),
-            "Application Status Update",
+            request.getSubject(),
             ex.getMessage(),
-            "APPLICATION_STATUS",
+            "GENERIC_EMAIL",
             NotificationState.FAILED
     );
 
     throw new EmailSendingException(
-            "Failed to send status email",
+            "Failed to send email",
             ex
     );
 }
+
     }   
 
     @Override
@@ -148,17 +150,20 @@ public class EmailServiceImpl implements EmailService {
 
         } catch (Exception ex) {
 
-            logService.saveLog(
-                    request.getTo(),
-                    "Application Status Update",
-                    "FAILED",
-                    "APPLICATION_STATUS",
-                    NotificationState.FAILED
-            );
+    System.err.println("APPLICATION STATUS EMAIL ERROR");
+    ex.printStackTrace();
 
-            throw new EmailSendingException(
-                    "Failed to send status email"
-            );
-        }
+    logService.saveLog(
+            request.getTo(),
+            "Application Status Update",
+            ex.getMessage(),
+            "APPLICATION_STATUS",
+            NotificationState.FAILED
+    );
+
+    throw new EmailSendingException(
+            "Failed to send status email"
+    );
+}
     }
 }

@@ -20,4 +20,8 @@ public class ApplicationStatusRequest {
     private String jobTitle;
 
     private ApplicationStatus status;
+
+    public String getTo() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

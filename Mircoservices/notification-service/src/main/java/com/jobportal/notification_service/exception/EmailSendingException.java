@@ -1,11 +1,12 @@
 package com.jobportal.notification_service.exception;
 
-public class EmailSendingException
-        extends RuntimeException {
+public class EmailSendingException extends RuntimeException {
 
-    public EmailSendingException(
-            String message
-    ) {
+    public EmailSendingException(String message) {
         super(message);
+    }
+
+    public EmailSendingException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
