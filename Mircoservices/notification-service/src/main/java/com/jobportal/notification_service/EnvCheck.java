@@ -13,9 +13,10 @@ public class EnvCheck {
 
     @PostConstruct
     public void printEnv() {
-        System.out.println(
-            "MONGODB_URI PRESENT = " +
-            (!mongoUri.equals("NOT_FOUND"))
-        );
+        System.out.println("MONGODB_URI PRESENT = " + (!mongoUri.equals("NOT_FOUND")));
+
+        if (!mongoUri.equals("NOT_FOUND")) {
+            System.out.println("MONGODB_URI STARTS WITH = " + mongoUri.substring(0, Math.min(20, mongoUri.length())));
+        }
     }
 }
