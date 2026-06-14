@@ -65,19 +65,22 @@ public class EmailServiceImpl implements EmailService {
 
         } catch (Exception ex) {
 
-            logService.saveLog(
-                    request.getTo(),
-                    request.getSubject(),
-                    request.getMessage(),
-                    "GENERIC_EMAIL",
-                    NotificationState.FAILED
-            );
+    ex.printStackTrace();
 
-            throw new EmailSendingException(
-                    "Failed to send email"
-            );
-        }
-    }
+    logService.saveLog(
+            request.getTo(),
+            "Application Status Update",
+            ex.getMessage(),
+            "APPLICATION_STATUS",
+            NotificationState.FAILED
+    );
+
+    throw new EmailSendingException(
+            "Failed to send status email",
+            ex
+    );
+}
+    }   
 
     @Override
     public void sendApplicationStatusEmail(
