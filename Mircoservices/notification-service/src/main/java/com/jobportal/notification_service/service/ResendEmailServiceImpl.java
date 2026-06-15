@@ -3,6 +3,7 @@ package com.jobportal.notification_service.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -13,11 +14,28 @@ import okhttp3.Response;
 public class ResendEmailServiceImpl
         implements ResendEmailService {
 
-    @Value("${RESEND_API_KEY:}")
+    @Value("${resend.api.key:}")
     private String apiKey;
 
     private final OkHttpClient client =
             new OkHttpClient();
+
+    @PostConstruct
+public void checkResend() {
+
+    System.out.println(
+        "API KEY PRESENT = " +
+        (apiKey != null && !apiKey.isBlank())
+    );
+
+    if (apiKey != null && !apiKey.isBlank()) {
+        System.out.println(
+            "API KEY PREFIX = " +
+            apiKey.substring(0, 5)
+        );
+    }
+}
+
 
     @Override
     public void sendEmail(
@@ -38,48 +56,43 @@ public class ResendEmailServiceImpl
                 .formatted(
                         to,
                         subject,
-                        html.replace("\"","\\\"")
+                        html.replace("\"", "\\\"")
                 );
 
         RequestBody body =
                 RequestBody.create(
                         json,
-                        MediaType.parse(
-                                "application/json"
-                        )
+                        MediaType.parse("application/json")
                 );
 
         Request request =
                 new Request.Builder()
-                        .url(
-                            "https://api.resend.com/emails"
+                        .url("https://api.resend.com/emails")
+                        .addHeader(
+                                "Authorization",
+                                "Bearer " + apiKey
                         )
                         .addHeader(
-                            "Authorization",
-                            "Bearer " + apiKey
+                                "Content-Type",
+                                "application/json"
                         )
-                        .addHeader(
-    "Content-Type",
-    "application/json"
-)
                         .post(body)
                         .build();
 
         try (Response response =
-                     client.newCall(request)
-                             .execute()) {
+                     client.newCall(request).execute()) {
 
             if (!response.isSuccessful()) {
 
-    String errorBody =
-            response.body() != null
-                    ? response.body().string()
-                    : "No response body";
+                String errorBody =
+                        response.body() != null
+                                ? response.body().string()
+                                : "No response body";
 
-    throw new RuntimeException(
-            "Resend API Error: " + errorBody
-    );
-}
+                throw new RuntimeException(
+                        "Resend API Error: " + errorBody
+                );
+            }
 
         } catch (Exception ex) {
 
