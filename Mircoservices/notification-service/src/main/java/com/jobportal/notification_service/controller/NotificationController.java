@@ -36,20 +36,23 @@ public class NotificationController {
     }
 
     @PostMapping("/application-status")
-    public ApiResponse sendApplicationStatusNotification(
-            @Valid
-            @RequestBody
-            ApplicationStatusRequest request
-    ) {
+public ApiResponse sendApplicationStatusNotification(
+        @Valid
+        @RequestBody
+        ApplicationStatusRequest request
+) {
 
-        emailService
-                .sendApplicationStatusEmail(
-                        request
-                );
+    System.out.println("CONTROLLER HIT");
+    System.out.println("EMAIL = " + request.getTo());
+    System.out.println("STATUS = " + request.getStatus());
 
-        return new ApiResponse(
-                true,
-                "Application status email sent successfully"
-        );
-    }
+    emailService.sendApplicationStatusEmail(
+            request
+    );
+
+    return new ApiResponse(
+            true,
+            "Application status email sent successfully"
+    );
+}
 }
