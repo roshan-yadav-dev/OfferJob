@@ -2,7 +2,11 @@ const env = require('../config/env');
 const logger = require('../config/logger');
 const Notification = require('../modules/notifications/notification.model');
 const emailTemplates = require('../templates/emails');
-const { getTransporter, isSmtpConfigured } = require('./smtpTransporter');
+const {
+    getTransporter,
+    getTransporterConfigSummary,
+    isSmtpConfigured,
+} = require('./smtpTransporter');
 
 const MAX_SEND_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 1000;
@@ -44,24 +48,55 @@ async function sendWithRetry({ to, subject, html }) {
     let lastError = null;
 
     for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt += 1) {
+        const mailOptions = {
+            from: env.MAIL_FROM,
+            to,
+            subject,
+            html,
+        };
+
+        logger.info('SMTP sendMail starting', {
+            attempt,
+            max_attempts: MAX_SEND_ATTEMPTS,
+            recipient: to,
+            sender: env.MAIL_FROM,
+            subject,
+            smtp_host: env.MAIL_HOST,
+            smtp_port: env.MAIL_PORT,
+            transporter_config: getTransporterConfigSummary(),
+        });
+
         try {
-            const result = await transporter.sendMail({
-                from: env.MAIL_FROM,
-                to,
+            const result = await transporter.sendMail(mailOptions);
+
+            logger.info('SMTP sendMail completed', {
+                attempt,
+                recipient: to,
+                sender: env.MAIL_FROM,
                 subject,
-                html,
+                accepted: result?.accepted || [],
+                rejected: result?.rejected || [],
+                response: result?.response || null,
+                messageId: result?.messageId || null,
+                envelope: result?.envelope || null,
             });
 
             return result;
         } catch (error) {
             lastError = error;
 
-            logger.warn('Email send attempt failed', {
+            logger.error('SMTP sendMail failed', {
                 attempt,
                 max_attempts: MAX_SEND_ATTEMPTS,
-                to,
+                recipient: to,
+                sender: env.MAIL_FROM,
                 subject,
+                smtp_host: env.MAIL_HOST,
+                smtp_port: env.MAIL_PORT,
                 error_message: error.message,
+                error_code: error.code || null,
+                error_command: error.command || null,
+                stack: error.stack || null,
             });
 
             if (attempt < MAX_SEND_ATTEMPTS) {
