@@ -69,7 +69,7 @@ async function sendWithRetry({ to, subject, html }) {
         try {
             const result = await transporter.sendMail(mailOptions);
 
-            logger.info('SMTP sendMail completed', {
+            logger.info('SMTP sendMail success', {
                 attempt,
                 recipient: to,
                 sender: env.MAIL_FROM,
@@ -323,7 +323,7 @@ async function sendTestEmail({ email }) {
     return sendWithRetry({
         to: email,
         subject: `${env.APP_NAME} - SMTP Test Email`,
-        html: `<p>This is a test email from <strong>${env.APP_NAME}</strong>.</p><p>If you received this, Gmail SMTP is configured correctly.</p>`,
+        html: `<p>This is a test email from <strong>${env.APP_NAME}</strong>.</p><p>If you received this, SMTP email delivery is configured correctly.</p>`,
     });
 }
 

@@ -53,8 +53,8 @@ module.exports = {
     APP_NAME,
     EMAIL_SENDER_NAME: APP_NAME,
 
-    // Email (Gmail SMTP)
-    MAIL_HOST: process.env.MAIL_HOST || 'smtp.gmail.com',
+    // Email (SMTP)
+    MAIL_HOST: process.env.MAIL_HOST || 'smtp-relay.brevo.com',
     MAIL_PORT: parseInt(process.env.MAIL_PORT || '587', 10),
     MAIL_USERNAME: process.env.MAIL_USERNAME || '',
     MAIL_PASSWORD: process.env.MAIL_PASSWORD || '',

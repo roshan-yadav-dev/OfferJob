@@ -1,16 +1,21 @@
-const dns = require('dns');
 const net = require('net');
-const tls = require('tls');
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 
 const env = require('../config/env');
 const logger = require('../config/logger');
 
-dns.setDefaultResultOrder('ipv4first');
-
 let transporter = null;
 
 const SMTP_TIMEOUT_MS = 30000;
+
+function isSecureSmtpConnection() {
+    return env.MAIL_PORT === 465;
+}
+
+function shouldRequireTls() {
+    return !isSecureSmtpConnection();
+}
 
 function isSmtpConfigured() {
     return Boolean(
@@ -26,8 +31,8 @@ function getTransporterConfigSummary() {
     return {
         host: env.MAIL_HOST,
         port: env.MAIL_PORT,
-        secure: env.MAIL_PORT === 587,
-        family: 4,
+        secure: isSecureSmtpConnection(),
+        requireTLS: shouldRequireTls(),
         connectionTimeout: SMTP_TIMEOUT_MS,
         greetingTimeout: SMTP_TIMEOUT_MS,
         socketTimeout: SMTP_TIMEOUT_MS,
@@ -48,17 +53,27 @@ async function resolveSmtpDns(host = env.MAIL_HOST) {
             .then((addresses) => ({ addresses, error: null }))
             .catch((error) => ({ addresses: [], error })),
         dns.promises
-            .lookup(host, { family: 4 })
-            .then((result) => ({ ...result, error: null }))
-            .catch((error) => ({ address: null, family: null, error })),
+            .lookup(host, { all: true })
+            .then((addresses) => ({ addresses, error: null }))
+            .catch((error) => ({ addresses: [], error })),
     ]);
+
+    const resolvedAddress =
+        lookupResult.addresses[0]?.address ||
+        ipv4Result.addresses[0] ||
+        ipv6Result.addresses[0] ||
+        null;
+    const resolvedFamily =
+        lookupResult.addresses[0]?.family ||
+        (ipv4Result.addresses.length ? 4 : null) ||
+        (ipv6Result.addresses.length ? 6 : null);
 
     const diagnostics = {
         host,
         ipv4Addresses: ipv4Result.addresses,
         ipv6Addresses: ipv6Result.addresses,
-        resolvedIp: lookupResult.address || ipv4Result.addresses[0] || null,
-        family: lookupResult.family || (ipv4Result.addresses.length ? 4 : null),
+        resolvedIp: resolvedAddress,
+        family: resolvedFamily,
         ipv4Error: ipv4Result.error?.message || null,
         ipv6Error: ipv6Result.error?.message || null,
         lookupError: lookupResult.error?.message || null,
@@ -83,7 +98,6 @@ function connectToSmtpHost({ host, port, timeout = SMTP_TIMEOUT_MS }) {
         const socket = net.connect({
             host,
             port,
-            family: 4,
         });
 
         let settled = false;
@@ -145,67 +159,6 @@ async function getSmtpDiagnostics() {
     };
 }
 
-function createIpv4SmtpSocket(options, callback) {
-    resolveSmtpDns(options.host)
-        .then(({ resolvedIp, family, lookupError }) => {
-            if (!resolvedIp) {
-                const error = new Error(
-                    lookupError || 'SMTP host did not resolve to IPv4',
-                );
-
-                logger.error('SMTP IPv4 DNS resolution failed', {
-                    smtp_host: options.host,
-                    error_message: error.message,
-                });
-
-                return callback(error);
-            }
-
-            logger.info('SMTP host resolved to IPv4 address', {
-                smtp_host: options.host,
-                smtp_ip: resolvedIp,
-                family,
-            });
-
-            const socketOptions = {
-                host: resolvedIp,
-                port: options.port,
-                family: 4,
-                servername: options.host,
-            };
-
-            if (options.localAddress) {
-                socketOptions.localAddress = options.localAddress;
-            }
-
-            const socket = options.secure
-                ? tls.connect(
-                      {
-                          ...socketOptions,
-                          ...(options.tls || {}),
-                      },
-                      () => {
-                          socket.removeListener('error', onSocketError);
-                          callback(null, { connection: socket, secured: true });
-                      },
-                  )
-                : net.connect(socketOptions, () => {
-                      socket.removeListener('error', onSocketError);
-                      callback(null, {
-                          connection: socket,
-                          secured: false,
-                      });
-                  });
-
-            function onSocketError(socketError) {
-                callback(socketError);
-            }
-
-            socket.once('error', onSocketError);
-        })
-        .catch((error) => callback(error));
-}
-
 function getTransporter() {
     if (!isSmtpConfigured()) {
         return null;
@@ -219,7 +172,8 @@ function getTransporter() {
         transporter = nodemailer.createTransport({
             host: env.MAIL_HOST,
             port: env.MAIL_PORT,
-            secure: env.MAIL_PORT === 485,
+            secure: isSecureSmtpConnection(),
+            requireTLS: shouldRequireTls(),
             auth: {
                 user: env.MAIL_USERNAME,
                 pass: env.MAIL_PASSWORD,
@@ -227,8 +181,6 @@ function getTransporter() {
             connectionTimeout: SMTP_TIMEOUT_MS,
             greetingTimeout: SMTP_TIMEOUT_MS,
             socketTimeout: SMTP_TIMEOUT_MS,
-            family: 4,
-            getSocket: createIpv4SmtpSocket,
         });
     }
 
