@@ -6,6 +6,7 @@ const Application = require('../applications/application.model');
 const getRecruiterJobs = async (recruiterId) => {
     return await Job.find({
         postedBy: recruiterId,
+        status: { $ne: 'DELETED' },
     })
         .sort({ createdAt: -1 })
         .lean();
@@ -116,9 +117,37 @@ const updateApplicationStatus = async (recruiterId, applicationId, status) => {
     return application;
 };
 
+const sendInterviewInvitation = async (
+    recruiterId,
+    applicationId,
+    interviewDetails = {},
+) => {
+    const application = await Application.findById(applicationId)
+        .populate('job')
+        .populate('student', 'name email');
+
+    if (!application) {
+        throw new Error('Application not found');
+    }
+
+    if (application.job.postedBy.toString() !== recruiterId.toString()) {
+        throw new Error('Unauthorized access');
+    }
+
+    application.interviewDetails = {
+        ...interviewDetails,
+        invitedAt: new Date(),
+    };
+
+    await application.save();
+
+    return application;
+};
+
 module.exports = {
     getRecruiterJobs,
     getJobApplicants,
     getRecruiterDashboardStats,
     updateApplicationStatus,
+    sendInterviewInvitation,
 };

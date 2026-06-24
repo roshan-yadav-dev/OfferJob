@@ -1,15 +1,11 @@
-function Card({ children, className = '' }) {
+function Card({ children, className = '', padding = true }) {
     return (
         <div
-            className={`
-        bg-white
-        rounded-xl
-        shadow-md
-        p-5
-        border
-        border-gray-100
-        ${className}
-      `}
+            className={[
+                'rounded-2xl border border-[#e2e8f0] bg-white shadow-sm transition-shadow duration-200',
+                padding ? 'p-6' : '',
+                className,
+            ].join(' ')}
         >
             {children}
         </div>

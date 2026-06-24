@@ -1,19 +1,29 @@
 import HeroSection from '../../components/landing/HeroSection';
-import FeaturesSection from '../../components/landing/FeaturesSection';
-import HowItWorksSection from '../../components/landing/HowItWorksSection';
-import TestimonialsSection from '../../components/landing/TestimonialsSection';
+import TrustSection from '../../components/landing/TrustSection';
+import FeatureGrid from '../../components/landing/FeatureGrid';
+import HowItWorks from '../../components/landing/HowItWorks';
+import AiHighlights from '../../components/landing/AiHighlights';
+import StatsSection from '../../components/landing/StatsSection';
 import CTASection from '../../components/landing/CTASection';
-import LandingFooter from '../../components/landing/LandingFooter';
+import Footer from '../../components/landing/Footer';
 
 function LandingPage() {
     return (
         <div className="w-full">
             <HeroSection />
-            <FeaturesSection />
-            <HowItWorksSection />
-            <TestimonialsSection />
+            <TrustSection />
+            <div id="features">
+                <FeatureGrid />
+            </div>
+            <div id="how-it-works">
+                <HowItWorks />
+            </div>
+            <div id="ai-highlights">
+                <AiHighlights />
+            </div>
+            <StatsSection />
             <CTASection />
-            <LandingFooter />
+            <Footer />
         </div>
     );
 }

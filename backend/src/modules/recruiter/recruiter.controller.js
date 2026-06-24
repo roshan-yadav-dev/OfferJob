@@ -5,10 +5,15 @@ const {
     getJobApplicants,
     getRecruiterDashboardStats,
     updateApplicationStatus,
+    sendInterviewInvitation,
 } = require('./recruiter.service');
 const {
     sendApplicationStatusNotification,
 } = require('../../services/notificationService');
+const {
+    dispatchEmail,
+    sendInterviewInviteEmail,
+} = require('../../services/emailService');
 
 // Get Recruiter Jobs
 const getRecruiterJobsController = asyncHandler(async (req, res) => {
@@ -48,14 +53,12 @@ const updateApplicationStatusController = asyncHandler(async (req, res) => {
         req.body.status,
     );
 
-    await sendApplicationStatusNotification({
+    sendApplicationStatusNotification({
         to: application.student.email,
-
         studentName: application.student.name,
-
         jobTitle: application.job.title,
-
         status: application.status.toUpperCase(),
+        userId: application.student._id,
     });
 
     res.status(200).json({
@@ -65,9 +68,45 @@ const updateApplicationStatusController = asyncHandler(async (req, res) => {
     });
 });
 
+const sendInterviewInviteController = asyncHandler(async (req, res) => {
+    const { interviewDate, interviewTime, interviewLocation, notes } = req.body;
+
+    const application = await sendInterviewInvitation(
+        req.user._id,
+        req.params.applicationId,
+        {
+            interviewDate,
+            interviewTime,
+            interviewLocation,
+            notes,
+        },
+    );
+
+    dispatchEmail(() =>
+        sendInterviewInviteEmail({
+            userId: application.student._id,
+            email: application.student.email,
+            studentName: application.student.name,
+            jobTitle: application.job.title,
+            company: application.job.company,
+            interviewDate,
+            interviewTime,
+            interviewLocation,
+            notes,
+        }),
+    );
+
+    res.status(200).json({
+        success: true,
+        message: 'Interview invitation sent',
+        application,
+    });
+});
+
 module.exports = {
     getRecruiterJobsController,
     getJobApplicantsController,
     getDashboardStatsController,
     updateApplicationStatusController,
+    sendInterviewInviteController,
 };

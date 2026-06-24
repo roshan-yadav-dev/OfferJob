@@ -11,11 +11,23 @@ const asyncHandler = require('../../utils/asyncHandler');
 const Job = require('../jobs/job.model');
 const { extractResumeTextFromReference } = require('./application.service');
 const { matchResumeToJob } = require('../../services/aiMatchingService');
+const {
+    dispatchEmail,
+    sendApplicationSubmittedEmail,
+    sendRecruiterNotificationEmail,
+} = require('../../services/emailService');
 
 // Apply To Job
 const applyToJobController = asyncHandler(async (req, res) => {
     const { jobId, resumeUrl, resumePath } = req.body;
     const resumeReference = resumeUrl || resumePath;
+
+    if (req.user.isActive === false) {
+        return res.status(403).json({
+            success: false,
+            message: 'Your account is suspended. Contact support.',
+        });
+    }
 
     // Validate Job ID
     if (!mongoose.Types.ObjectId.isValid(jobId)) {
@@ -33,6 +45,18 @@ const applyToJobController = asyncHandler(async (req, res) => {
         });
     }
 
+    const job = await Job.findOne({
+        _id: jobId,
+        $or: [{ status: 'ACTIVE' }, { status: { $exists: false } }],
+    });
+
+    if (!job) {
+        return res.status(404).json({
+            success: false,
+            message: 'Job not found or no longer accepting applications',
+        });
+    }
+
     const applicationData = {
         student: req.user._id,
         job: jobId,
@@ -40,6 +64,35 @@ const applyToJobController = asyncHandler(async (req, res) => {
     };
 
     const application = await createApplication(applicationData);
+
+    const populatedJob = await Job.findById(jobId)
+        .populate('postedBy', 'name email')
+        .lean();
+
+    if (populatedJob) {
+        dispatchEmail(() =>
+            sendApplicationSubmittedEmail({
+                userId: req.user._id,
+                email: req.user.email,
+                studentName: req.user.name,
+                jobTitle: populatedJob.title,
+                company: populatedJob.company,
+            }),
+        );
+
+        if (populatedJob.postedBy?.email) {
+            dispatchEmail(() =>
+                sendRecruiterNotificationEmail({
+                    userId: populatedJob.postedBy._id,
+                    email: populatedJob.postedBy.email,
+                    recruiterName: populatedJob.postedBy.name,
+                    studentName: req.user.name,
+                    jobTitle: populatedJob.title,
+                    company: populatedJob.company,
+                }),
+            );
+        }
+    }
 
     res.status(201).json({
         success: true,

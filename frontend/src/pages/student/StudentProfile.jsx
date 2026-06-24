@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { LoadingSpinner } from '../../components/common/LoadingStates';
+import { ProfileFormSkeleton } from '../../components/common/LoadingStates';
+import PageHeader from '../../components/common/PageHeader';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserProfile } from '../../api/authApi';
 import { uploadResume } from '../../api/uploadApi';
@@ -183,21 +184,15 @@ function StudentProfile() {
     };
 
     if (!user) {
-        return <LoadingSpinner message="Loading profile..." />;
+        return <ProfileFormSkeleton />;
     }
 
     return (
-        <div className="space-y-8 max-w-4xl">
-            {/* Header */}
-            <div>
-                <h1 className="text-4xl font-bold text-gray-800">
-                    My Profile 👤
-                </h1>
-
-                <p className="text-gray-500 mt-2">
-                    Manage your profile information and resume.
-                </p>
-            </div>
+        <div className="animate-fade-in-up mx-auto max-w-4xl space-y-8">
+            <PageHeader
+                title="My Profile"
+                description="Manage your profile information and resume."
+            />
 
             {/* Messages */}
             {successMessage && (

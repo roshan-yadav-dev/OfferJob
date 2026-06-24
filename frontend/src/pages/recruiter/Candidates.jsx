@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { Users } from 'lucide-react';
 
-import Card from '../../components/common/Card';
+import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
+import ApplicationCard from '../../components/jobs/ApplicationCard';
 import {
-    LoadingSpinner,
+    ApplicationListSkeleton,
     EmptyState,
 } from '../../components/common/LoadingStates';
 
@@ -18,18 +20,12 @@ import { resolveResumeUrl } from '../../utils/resolveResumeUrl';
 
 function Candidates() {
     const [applicants, setApplicants] = useState([]);
-
     const [jobs, setJobs] = useState([]);
-
     const [selectedJob, setSelectedJob] = useState('');
-
     const [loading, setLoading] = useState(true);
-
     const [updatingId, setUpdatingId] = useState(null);
-
     const [error, setError] = useState(null);
 
-    // Sort applicants by AI score descending
     const sortByAIScore = (applicantsList) => {
         return [...applicantsList].sort((a, b) => {
             const scoreA = a.aiScore ?? -1;
@@ -38,8 +34,7 @@ function Candidates() {
         });
     };
 
-    // Fetch applicants for selected job
-    const fetchApplicants = useCallback(async (jobId) => {
+    const fetchApplicants = async (jobId) => {
         try {
             setLoading(true);
             setError(null);
@@ -50,18 +45,17 @@ function Candidates() {
             const sortedApplicants = sortByAIScore(applicantsList);
 
             setApplicants(sortedApplicants);
-        } catch (error) {
+        } catch (err) {
             const errorMsg =
-                error.response?.data?.message || 'Failed to load applicants';
+                err.response?.data?.message || 'Failed to load applicants';
             setError(errorMsg);
-            handleApiError(error, errorMsg);
+            handleApiError(err, errorMsg);
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
-    // Fetch recruiter jobs
-    const fetchRecruiterJobs = useCallback(async () => {
+    const fetchRecruiterJobs = async () => {
         try {
             setLoading(true);
             setError(null);
@@ -72,7 +66,6 @@ function Candidates() {
 
             setJobs(recruiterJobs);
 
-            // Auto select first recruiter job
             if (recruiterJobs.length > 0) {
                 const firstJobId = recruiterJobs[0]._id;
 
@@ -80,51 +73,41 @@ function Candidates() {
 
                 await fetchApplicants(firstJobId);
             }
-        } catch (error) {
+        } catch (err) {
             const errorMsg =
-                error.response?.data?.message ||
+                err.response?.data?.message ||
                 'Failed to load recruiter jobs';
             setError(errorMsg);
-            handleApiError(error, errorMsg);
+            handleApiError(err, errorMsg);
         } finally {
             setLoading(false);
         }
-    }, [fetchApplicants]);
-
-    // Fetch recruiter jobs on mount
+    };
 
     useEffect(() => {
-        (async () => {
-            await fetchRecruiterJobs();
-        })();
+        fetchRecruiterJobs();
     }, []);
 
-    // Update applicant status
     const handleStatusUpdate = async (applicationId, status) => {
         try {
             setUpdatingId(applicationId);
 
             await updateApplicationStatus(applicationId, status);
 
-            // Instant UI update
             setApplicants((prev) =>
                 prev.map((applicant) =>
                     applicant._id === applicationId
-                        ? {
-                              ...applicant,
-                              status,
-                          }
+                        ? { ...applicant, status }
                         : applicant,
                 ),
             );
-        } catch (error) {
-            handleApiError(error, 'Failed to update status. Please try again.');
+        } catch (err) {
+            handleApiError(err, 'Failed to update status. Please try again.');
         } finally {
             setUpdatingId(null);
         }
     };
 
-    // View resume in new tab
     const handleViewResume = (resumeUrl) => {
         const normalizedResumeUrl = resolveResumeUrl(resumeUrl);
 
@@ -133,7 +116,6 @@ function Candidates() {
         }
     };
 
-    // Download resume
     const handleDownloadResume = (resumeUrl, candidateName) => {
         const normalizedResumeUrl = resolveResumeUrl(resumeUrl);
 
@@ -146,25 +128,23 @@ function Candidates() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        } catch (error) {
-            handleApiError(error, 'Failed to download resume');
+        } catch (err) {
+            handleApiError(err, 'Failed to download resume');
         }
     };
 
-    // Loading state
     if (loading) {
-        return <LoadingSpinner message="Loading candidates..." />;
+        return <ApplicationListSkeleton />;
     }
 
     if (error) {
         return (
             <div className="space-y-8">
-                <div>
-                    <h1 className="text-4xl font-bold text-gray-800">
-                        Candidates 👨‍💻
-                    </h1>
-                </div>
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                <PageHeader title="Candidates" />
+                <div
+                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700"
+                    role="alert"
+                >
                     <p className="font-semibold">Error Loading Candidates</p>
                     <p className="text-sm">{error}</p>
                 </div>
@@ -173,30 +153,15 @@ function Candidates() {
     }
 
     return (
-        <div className="space-y-8">
-            {/* Header */}
-
-            <div>
-                <h1
-                    className="
-                        text-4xl
-                        font-bold
-                        text-gray-800
-                    "
-                >
-                    Candidates 👨‍💻
-                </h1>
-
-                <p className="text-gray-500 mt-2">
-                    View and manage applicants.
-                </p>
-            </div>
-
-            {/* Job Selector */}
+        <div className="animate-fade-in-up space-y-8">
+            <PageHeader
+                title="Candidates"
+                description="View and manage applicants."
+            />
 
             {jobs.length > 0 && (
                 <div>
-                    <label className="block mb-2 font-medium text-gray-700">
+                    <label className="mb-2 block text-sm font-medium text-[#0f172a]">
                         Select Job
                     </label>
 
@@ -204,19 +169,9 @@ function Candidates() {
                         value={selectedJob}
                         onChange={(e) => {
                             setSelectedJob(e.target.value);
-
                             fetchApplicants(e.target.value);
                         }}
-                        className="
-                            border
-                            border-gray-300
-                            rounded-lg
-                            px-4
-                            py-2
-                            outline-none
-                            focus:ring-2
-                            focus:ring-blue-500
-                        "
+                        className="rounded-xl border border-[#e2e8f0] px-4 py-2.5 outline-none transition-all duration-200 ease-in-out focus:ring-2 focus:ring-[#2563eb]"
                     >
                         {jobs.map((job) => (
                             <option key={job._id} value={job._id}>
@@ -227,131 +182,78 @@ function Candidates() {
                 </div>
             )}
 
-            {/* Applicants List */}
-
-            <div className="grid gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {applicants.length === 0 ? (
-                    <EmptyState
-                        message="No applicants for this job yet."
-                        icon="👥"
-                    />
+                    <div className="md:col-span-2">
+                        <EmptyState
+                            title="No applicants yet"
+                            message="No applicants for this job yet."
+                            icon={Users}
+                        />
+                    </div>
                 ) : (
                     applicants.map((applicant) => (
-                        <Card key={applicant._id}>
-                            <div className="space-y-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold">
-                                        {applicant.student?.name || 'Unknown'}
-                                    </h2>
+                        <ApplicationCard
+                            key={applicant._id}
+                            application={applicant}
+                            variant="recruiter"
+                        >
+                            <div className="flex flex-wrap gap-3">
+                                <Button
+                                    variant="primary"
+                                    onClick={() =>
+                                        handleStatusUpdate(
+                                            applicant._id,
+                                            'shortlisted',
+                                        )
+                                    }
+                                    loading={updatingId === applicant._id}
+                                    disabled={updatingId !== null}
+                                >
+                                    Shortlist
+                                </Button>
 
-                                    <p className="text-gray-500">
-                                        {applicant.student?.email || 'No email'}
-                                    </p>
-
-                                    {/* AI Match Score */}
-                                    <p className="font-semibold mt-2">
-                                        AI Match Score:{' '}
-                                        {applicant.aiScore != null ? (
-                                            <span
-                                                className={
-                                                    applicant.aiScore >= 0.75
-                                                        ? 'text-green-600'
-                                                        : applicant.aiScore >=
-                                                            0.5
-                                                          ? 'text-yellow-600'
-                                                          : 'text-red-600'
-                                                }
-                                            >
-                                                {(
-                                                    applicant.aiScore * 100
-                                                ).toFixed(2)}
-                                                %
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-500">
-                                                N/A
-                                            </span>
-                                        )}
-                                    </p>
-
-                                    {/* Status */}
-                                    <p className="font-semibold text-blue-600 mt-2">
-                                        Status:{' '}
-                                        <span
-                                            className={
-                                                applicant.status ===
-                                                'shortlisted'
-                                                    ? 'text-green-600'
-                                                    : applicant.status ===
-                                                        'rejected'
-                                                      ? 'text-red-600'
-                                                      : 'text-yellow-600'
-                                            }
-                                        >
-                                            {applicant.status || 'Pending'}
-                                        </span>
-                                    </p>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <Button
-                                        variant="success"
-                                        onClick={() =>
-                                            handleStatusUpdate(
-                                                applicant._id,
-                                                'shortlisted',
-                                            )
-                                        }
-                                        loading={updatingId === applicant._id}
-                                        disabled={updatingId !== null}
-                                    >
-                                        Shortlist
-                                    </Button>
-
-                                    <Button
-                                        variant="danger"
-                                        onClick={() =>
-                                            handleStatusUpdate(
-                                                applicant._id,
-                                                'rejected',
-                                            )
-                                        }
-                                        loading={updatingId === applicant._id}
-                                        disabled={updatingId !== null}
-                                    >
-                                        Reject
-                                    </Button>
-                                </div>
-
-                                {resolveResumeUrl(applicant.resumeUrl) && (
-                                    <div className="flex gap-3 pt-2 border-t border-gray-200">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() =>
-                                                handleViewResume(
-                                                    applicant.resumeUrl,
-                                                )
-                                            }
-                                        >
-                                            View Resume
-                                        </Button>
-
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() =>
-                                                handleDownloadResume(
-                                                    applicant.resumeUrl,
-                                                    applicant.student?.name ||
-                                                        'resume',
-                                                )
-                                            }
-                                        >
-                                            Download Resume
-                                        </Button>
-                                    </div>
-                                )}
+                                <Button
+                                    variant="danger"
+                                    onClick={() =>
+                                        handleStatusUpdate(
+                                            applicant._id,
+                                            'rejected',
+                                        )
+                                    }
+                                    loading={updatingId === applicant._id}
+                                    disabled={updatingId !== null}
+                                >
+                                    Reject
+                                </Button>
                             </div>
-                        </Card>
+
+                            {resolveResumeUrl(applicant.resumeUrl) && (
+                                <div className="flex flex-wrap gap-3 border-t border-[#e2e8f0] pt-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            handleViewResume(applicant.resumeUrl)
+                                        }
+                                    >
+                                        View Resume
+                                    </Button>
+
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() =>
+                                            handleDownloadResume(
+                                                applicant.resumeUrl,
+                                                applicant.student?.name ||
+                                                    'resume',
+                                            )
+                                        }
+                                    >
+                                        Download Resume
+                                    </Button>
+                                </div>
+                            )}
+                        </ApplicationCard>
                     ))
                 )}
             </div>

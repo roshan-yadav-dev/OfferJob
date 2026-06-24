@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
 
+import PageHeader from '../../components/common/PageHeader';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 
 import { createJob } from '../../api/jobApi';
 import { handleApiError } from '../../utils/apiErrorHandler';
+import { showSuccess } from '../../utils/toast';
 
 function PostJob() {
     const [loading, setLoading] = useState(false);
@@ -30,7 +31,7 @@ function PostJob() {
             // Call backend to create job
             const response = await createJob(data);
 
-            toast.success(response.message || 'Job posted successfully!');
+            showSuccess(response.message || 'Job posted successfully!');
 
             // Reset form
             reset();
@@ -42,24 +43,11 @@ function PostJob() {
     };
 
     return (
-        <div className="space-y-8">
-            {/* Header */}
-
-            <div>
-                <h1
-                    className="
-                        text-4xl
-                        font-bold
-                        text-gray-800
-                    "
-                >
-                    Post New Job 🚀
-                </h1>
-
-                <p className="text-gray-500 mt-2">
-                    Create and publish job openings.
-                </p>
-            </div>
+        <div className="animate-fade-in-up space-y-8">
+            <PageHeader
+                title="Post New Job"
+                description="Create and publish job openings."
+            />
 
             {/* Form */}
 

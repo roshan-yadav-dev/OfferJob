@@ -16,52 +16,93 @@ function Navbar() {
     return (
         <nav
             className="
+                sticky
+                top-0
+                z-50
                 flex
                 items-center
                 justify-between
-                px-8
+                border-b
+                border-[#e2e8f0]
+                bg-white/95
+                px-4
                 py-4
-                bg-white
-                shadow-sm
+                backdrop-blur-sm
+                sm:px-8
             "
         >
-            <h1 className="text-2xl font-bold text-blue-600">
+            <Link
+                to="/"
+                className="text-xl font-bold tracking-tight text-[#2563eb] sm:text-2xl"
+            >
                 Smart AI Job Portal
-            </h1>
+            </Link>
 
-            <div className="flex gap-6 font-medium items-center">
-                <Link to="/">Home</Link>
+            <div className="flex items-center gap-4 text-sm font-medium sm:gap-6">
+                <Link
+                    to="/"
+                    className="hidden text-[#64748b] transition-colors hover:text-[#0f172a] sm:inline"
+                >
+                    Home
+                </Link>
 
-                <Link to="/jobs">Jobs</Link>
+                <Link
+                    to="/jobs"
+                    className="text-[#64748b] transition-colors hover:text-[#0f172a]"
+                >
+                    Jobs
+                </Link>
 
                 {!user && (
                     <>
-                        <Link to="/login">Login</Link>
+                        <Link
+                            to="/login"
+                            className="text-[#64748b] transition-colors hover:text-[#0f172a]"
+                        >
+                            Login
+                        </Link>
 
-                        <Link to="/signup">Signup</Link>
+                        <Link
+                            to="/signup"
+                            className="rounded-xl bg-[#2563eb] px-4 py-2 text-white transition-colors hover:bg-blue-700"
+                        >
+                            Signup
+                        </Link>
                     </>
                 )}
 
+                {user && user.role === 'admin' && (
+                    <Link
+                        to="/admin/dashboard"
+                        className="hidden text-[#64748b] transition-colors hover:text-[#0f172a] sm:inline"
+                    >
+                        Admin
+                    </Link>
+                )}
+
                 {user && user.role === 'student' && (
-                    <Link to="/student/dashboard">Dashboard</Link>
+                    <Link
+                        to="/student/dashboard"
+                        className="hidden text-[#64748b] transition-colors hover:text-[#0f172a] sm:inline"
+                    >
+                        Dashboard
+                    </Link>
                 )}
 
                 {user && user.role === 'recruiter' && (
-                    <Link to="/recruiter/dashboard">Dashboard</Link>
+                    <Link
+                        to="/recruiter/dashboard"
+                        className="hidden text-[#64748b] transition-colors hover:text-[#0f172a] sm:inline"
+                    >
+                        Dashboard
+                    </Link>
                 )}
 
                 {user && (
                     <button
+                        type="button"
                         onClick={handleLogout}
-                        className="
-                            bg-red-500
-                            text-white
-                            px-4
-                            py-2
-                            rounded-lg
-                            hover:bg-red-600
-                            transition
-                        "
+                        className="focus-ring rounded-xl border border-[#e2e8f0] px-4 py-2 text-sm font-medium text-[#64748b] transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                     >
                         Logout
                     </button>

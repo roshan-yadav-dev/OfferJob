@@ -11,6 +11,16 @@ const registerValidation = [
         .withMessage('Password must be at least 6 chars'),
 ];
 
+const forgotPasswordValidation = [
+    body('email').isEmail().withMessage('Valid email required'),
+];
+
+const resetPasswordValidation = [
+    body('password')
+        .isLength({ min: 6 })
+        .withMessage('Password must be at least 6 chars'),
+];
+
 // Validation Middleware - Convert errors to object format
 const validate = (req, res, next) => {
     const errors = validationResult(req);
@@ -33,5 +43,7 @@ const validate = (req, res, next) => {
 
 module.exports = {
     registerValidation,
+    forgotPasswordValidation,
+    resetPasswordValidation,
     validate,
 };

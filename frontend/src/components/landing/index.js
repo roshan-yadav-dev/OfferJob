@@ -1,6 +1,13 @@
 export { default as HeroSection } from './HeroSection';
-export { default as FeaturesSection } from './FeaturesSection';
-export { default as HowItWorksSection } from './HowItWorksSection';
+export { default as TrustSection } from './TrustSection';
+export { default as FeatureCard } from './FeatureCard';
+export { default as FeatureGrid } from './FeatureGrid';
+export { default as FeaturesSection } from './FeatureGrid';
+export { default as HowItWorks } from './HowItWorks';
+export { default as HowItWorksSection } from './HowItWorks';
+export { default as AiHighlights } from './AiHighlights';
+export { default as StatsSection } from './StatsSection';
 export { default as TestimonialsSection } from './TestimonialsSection';
 export { default as CTASection } from './CTASection';
-export { default as LandingFooter } from './LandingFooter';
+export { default as Footer } from './Footer';
+export { default as LandingFooter } from './Footer';

@@ -1,11 +1,15 @@
 import Navbar from '../components/common/Navbar';
 
-function MainLayout({ children }) {
+function MainLayout({ children, fullWidth = false }) {
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-[#f8fafc] font-sans">
             <Navbar />
 
-            <div className="max-w-6xl mx-auto p-10">{children}</div>
+            {fullWidth ? (
+                children
+            ) : (
+                <div className="mx-auto max-w-6xl p-6 sm:p-10">{children}</div>
+            )}
         </div>
     );
 }

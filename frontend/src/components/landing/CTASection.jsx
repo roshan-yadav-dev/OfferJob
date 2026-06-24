@@ -1,37 +1,42 @@
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+
 import Button from '../common/Button';
 
 function CTASection() {
     return (
-        <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 px-4">
-            <div className="max-w-4xl mx-auto text-center space-y-8">
-                <div className="space-y-4">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white">
-                        Ready to Transform Your Hiring?
-                    </h2>
-                    <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-                        Join thousands of recruiters and candidates using Smart
-                        AI Job Portal to find perfect matches.
-                    </p>
-                </div>
+        <section className="px-4 py-20 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-6xl">
+                <div className="relative overflow-hidden rounded-2xl bg-[#2563eb] px-6 py-14 text-center shadow-lg sm:px-10 sm:py-16">
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+                    <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-                    <Link to="/signup">
-                        <Button
-                            variant="primary"
-                            className="bg-white text-blue-600 hover:bg-gray-100 text-lg py-3 px-8"
-                        >
-                            Get Started for Free
-                        </Button>
-                    </Link>
-                    <Link to="/jobs">
-                        <Button
-                            variant="outline"
-                            className="border-white text-white hover:bg-white hover:text-blue-600 text-lg py-3 px-8"
-                        >
-                            Browse Jobs
-                        </Button>
-                    </Link>
+                    <div className="relative mx-auto max-w-2xl space-y-6">
+                        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                            Ready to Start Your Career Journey?
+                        </h2>
+                        <p className="text-base text-blue-100 sm:text-lg">
+                            Join students and recruiters using AI-powered tools
+                            to find better matches and hire with confidence.
+                        </p>
+
+                        <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
+                            <Link to="/signup">
+                                <Button className="w-full rounded-xl bg-white px-6 py-3 text-base font-semibold text-[#2563eb] hover:bg-blue-50 sm:w-auto">
+                                    Create Account
+                                    <ArrowRight className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                            <Link to="/jobs">
+                                <Button
+                                    variant="outline"
+                                    className="w-full rounded-xl border-white px-6 py-3 text-base text-white hover:bg-white/10 sm:w-auto"
+                                >
+                                    Browse Opportunities
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

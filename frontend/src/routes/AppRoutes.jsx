@@ -32,6 +32,14 @@ import Candidates from '../pages/recruiter/Candidates';
 import RecruiterApplications from '../pages/recruiter/RecruiterApplications';
 import RecruiterProfile from '../pages/recruiter/RecruiterProfile';
 
+/* Admin Pages */
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminJobs from '../pages/admin/AdminJobs';
+import AdminRecruiters from '../pages/admin/AdminRecruiters';
+import AdminStudents from '../pages/admin/AdminStudents';
+import AdminAnalytics from '../pages/admin/AdminAnalytics';
+import AdminLayout from '../layouts/AdminLayout';
+
 /* Routes */
 import ProtectedRoute from '../middleware/ProtectedRoute';
 import RoleRoute from '../middleware/RoleRoute';
@@ -44,7 +52,7 @@ function AppRoutes() {
             <Route
                 path="/"
                 element={
-                    <MainLayout>
+                    <MainLayout fullWidth>
                         <LandingPage />
                     </MainLayout>
                 }
@@ -191,6 +199,69 @@ function AppRoutes() {
                             <DashboardLayout>
                                 <RecruiterProfile />
                             </DashboardLayout>
+                        </RoleRoute>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Admin Routes */}
+
+            <Route
+                path="/admin/dashboard"
+                element={
+                    <ProtectedRoute>
+                        <RoleRoute role="admin">
+                            <AdminLayout>
+                                <AdminDashboard />
+                            </AdminLayout>
+                        </RoleRoute>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/jobs"
+                element={
+                    <ProtectedRoute>
+                        <RoleRoute role="admin">
+                            <AdminLayout>
+                                <AdminJobs />
+                            </AdminLayout>
+                        </RoleRoute>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/recruiters"
+                element={
+                    <ProtectedRoute>
+                        <RoleRoute role="admin">
+                            <AdminLayout>
+                                <AdminRecruiters />
+                            </AdminLayout>
+                        </RoleRoute>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/students"
+                element={
+                    <ProtectedRoute>
+                        <RoleRoute role="admin">
+                            <AdminLayout>
+                                <AdminStudents />
+                            </AdminLayout>
+                        </RoleRoute>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/analytics"
+                element={
+                    <ProtectedRoute>
+                        <RoleRoute role="admin">
+                            <AdminLayout>
+                                <AdminAnalytics />
+                            </AdminLayout>
                         </RoleRoute>
                     </ProtectedRoute>
                 }

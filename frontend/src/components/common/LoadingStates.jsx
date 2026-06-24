@@ -1,38 +1,50 @@
-import Card from '../../components/common/Card';
+import EmptyState from './EmptyState';
+import {
+    DashboardPageSkeleton,
+    JobListSkeleton,
+    ApplicationListSkeleton,
+    ProfileFormSkeleton,
+    AppShellSkeleton,
+} from './Skeleton';
 
-export const LoadingSpinner = ({ message = 'Loading...' }) => (
-    <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-            <div className="mb-4 inline-block">
-                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500" />
-            </div>
-            <p className="text-gray-600">{message}</p>
-        </div>
+export {
+    DashboardPageSkeleton,
+    JobListSkeleton,
+    ApplicationListSkeleton,
+    ProfileFormSkeleton,
+    AppShellSkeleton,
+} from './Skeleton';
+
+export { default as Skeleton } from './Skeleton';
+
+/** @deprecated Use skeleton variants instead */
+export const LoadingSpinner = ({ message }) => (
+    <div
+        className="flex min-h-[40vh] items-center justify-center"
+        role="status"
+        aria-live="polite"
+    >
+        <p className="sr-only">{message || 'Loading'}</p>
+        <JobListSkeleton count={2} />
     </div>
 );
 
-export const EmptyState = ({ message = 'No data available', icon = '📭' }) => (
-    <Card>
-        <div className="py-8 text-center">
-            <p className="text-3xl mb-2">{icon}</p>
-            <p className="text-lg text-gray-500">{message}</p>
-        </div>
-    </Card>
-);
+export { EmptyState };
 
 export const ErrorState = ({ message = 'Something went wrong', onRetry }) => (
-    <Card>
-        <div className="py-8 text-center">
-            <p className="text-3xl mb-2">⚠️</p>
-            <p className="text-lg text-gray-500 mb-4">{message}</p>
-            {onRetry && (
-                <button
-                    onClick={onRetry}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                    Retry
-                </button>
-            )}
-        </div>
-    </Card>
+    <div className="animate-fade-in-up rounded-2xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+        <p className="mb-2 text-lg font-semibold text-[#0f172a]">
+            Something went wrong
+        </p>
+        <p className="mb-4 text-sm text-[#64748b]">{message}</p>
+        {onRetry && (
+            <button
+                type="button"
+                onClick={onRetry}
+                className="focus-ring rounded-xl bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#1d4ed8]"
+            >
+                Try again
+            </button>
+        )}
+    </div>
 );

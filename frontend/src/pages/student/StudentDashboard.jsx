@@ -1,6 +1,27 @@
 import { useState, useEffect } from 'react';
+import {
+    FileText,
+    Clock,
+    CheckCircle,
+    XCircle,
+    BarChart3,
+} from 'lucide-react';
+
+import PageHeader from '../../components/common/PageHeader';
 import StatsCard from '../../components/dashboard/StatsCard';
+import ApplicationCard from '../../components/jobs/ApplicationCard';
+import ATSProgressBar from '../../components/jobs/ATSProgressBar';
+import { DashboardPageSkeleton } from '../../components/common/LoadingStates';
 import { getStudentDashboard } from '../../api/applicationApi';
+import {
+    calculateAverageAtsScore,
+    countApplicationsThisWeek,
+    formatAtsInsight,
+    formatConversionRate,
+    formatRejectedInsight,
+    formatWeeklyInsight,
+} from '../../utils/dashboardInsights';
+import { normalizeAtsScore } from '../../utils/formatters';
 
 function StudentDashboard() {
     const [stats, setStats] = useState({
@@ -33,129 +54,116 @@ function StudentDashboard() {
         fetchDashboardData();
     }, []);
 
+    const weeklyApplications = countApplicationsThisWeek(
+        stats.recentApplications,
+    );
+    const averageAtsScore = calculateAverageAtsScore(stats.latestAtsScores);
+
     if (loading) {
-        return (
-            <div className="space-y-8">
-                <div>
-                    <h1 className="text-4xl font-bold text-gray-800">
-                        Welcome Back 👋
-                    </h1>
-                    <p className="text-gray-500 mt-2">
-                        Track jobs, applications, and resume progress.
-                    </p>
-                </div>
-                <div className="text-center text-gray-600">Loading...</div>
-            </div>
-        );
+        return <DashboardPageSkeleton />;
     }
 
     return (
-        <div className="space-y-8">
-            {/* Welcome Section */}
-            <div>
-                <h1 className="text-4xl font-bold text-gray-800">
-                    Welcome Back 👋
-                </h1>
-                <p className="text-gray-500 mt-2">
-                    Track jobs, applications, and resume progress.
-                </p>
-            </div>
+        <div className="animate-fade-in-up space-y-8">
+            <PageHeader
+                title="Welcome Back"
+                description="Track jobs, applications, and resume progress."
+            />
 
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                <div
+                    className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700"
+                    role="alert"
+                >
                     {error}
                 </div>
             )}
 
-            {/* Stats Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
-                    title="Total Applications"
+                    title="Applications"
                     value={stats.totalApplications}
+                    subtitle={formatWeeklyInsight(weeklyApplications)}
+                    icon={FileText}
+                    color="blue"
                 />
-                <StatsCard title="Applied" value={stats.appliedCount} />
-                <StatsCard title="Shortlisted" value={stats.shortlistedCount} />
-                <StatsCard title="Rejected" value={stats.rejectedCount} />
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl font-bold mb-4">Recent Applications</h2>
-                {stats.recentApplications &&
-                stats.recentApplications.length > 0 ? (
-                    <div className="space-y-4">
-                        {stats.recentApplications.map((app) => (
-                            <div
-                                key={app._id}
-                                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800">
-                                            {app.job?.title || 'Job Title'}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                            {app.job?.company || 'Company Name'}{' '}
-                                            •{' '}
-                                            {new Date(
-                                                app.createdAt,
-                                            ).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <span
-                                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                            app.status === 'shortlisted'
-                                                ? 'bg-green-100 text-green-800'
-                                                : app.status === 'rejected'
-                                                  ? 'bg-red-100 text-red-800'
-                                                  : 'bg-blue-100 text-blue-800'
-                                        }`}
-                                    >
-                                        {app.status?.charAt(0).toUpperCase() +
-                                            app.status?.slice(1)}
-                                    </span>
-                                </div>
-                                {app.aiScore !== null &&
-                                    app.aiScore !== undefined && (
-                                        <div className="mt-3 pt-3 border-t border-gray-200">
-                                            <p className="text-sm text-gray-600">
-                                                ATS Score:{' '}
-                                                <span className="font-semibold text-gray-800">
-                                                    {Math.round(
-                                                        app.aiScore * 100,
-                                                    )}
-                                                    %
-                                                </span>
-                                            </p>
-                                        </div>
-                                    )}
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-gray-600">No applications yet.</p>
+                <StatsCard
+                    title="Pending"
+                    value={stats.appliedCount}
+                    subtitle={
+                        stats.appliedCount > 0
+                            ? 'Awaiting recruiter review'
+                            : 'No pending applications'
+                    }
+                    icon={Clock}
+                    color="amber"
+                />
+                <StatsCard
+                    title="Shortlisted"
+                    value={stats.shortlistedCount}
+                    subtitle={formatConversionRate(
+                        stats.shortlistedCount,
+                        stats.totalApplications,
+                    )}
+                    icon={CheckCircle}
+                    color="green"
+                />
+                <StatsCard
+                    title="Rejected"
+                    value={stats.rejectedCount}
+                    subtitle={formatRejectedInsight(stats.rejectedCount)}
+                    icon={XCircle}
+                    color="red"
+                />
+                {averageAtsScore != null && (
+                    <StatsCard
+                        title="Avg ATS Score"
+                        value={`${averageAtsScore}%`}
+                        subtitle={formatAtsInsight(averageAtsScore)}
+                        icon={BarChart3}
+                        color="purple"
+                        progressValue={averageAtsScore}
+                    />
                 )}
             </div>
 
-            {/* Latest ATS Scores */}
-            {stats.latestAtsScores && stats.latestAtsScores.length > 0 && (
-                <div className="bg-white rounded-xl shadow-md p-6">
-                    <h2 className="text-2xl font-bold mb-4">
+            <div className="rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-xl font-bold text-[#0f172a]">
+                    Recent Applications
+                </h2>
+                {stats.recentApplications?.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {stats.recentApplications.map((app) => (
+                            <ApplicationCard
+                                key={app._id}
+                                application={app}
+                                showLocation={false}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-[#64748b]">No applications yet.</p>
+                )}
+            </div>
+
+            {stats.latestAtsScores?.length > 0 && (
+                <div className="rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                    <h2 className="mb-4 text-xl font-bold text-[#0f172a]">
                         Latest ATS Scores
                     </h2>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {stats.latestAtsScores.map((app) => (
                             <div
                                 key={app._id}
-                                className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                                className="rounded-xl border border-[#e2e8f0] bg-slate-50 p-4"
                             >
-                                <span className="text-gray-700">
+                                <p className="mb-3 text-sm font-medium text-[#0f172a]">
                                     {app.job?.title || 'Job Title'} at{' '}
                                     {app.job?.company || 'Company'}
-                                </span>
-                                <span className="font-bold text-blue-600">
-                                    {Math.round(app.aiScore * 100)}%
-                                </span>
+                                </p>
+                                <ATSProgressBar
+                                    score={normalizeAtsScore(app.aiScore)}
+                                />
                             </div>
                         ))}
                     </div>

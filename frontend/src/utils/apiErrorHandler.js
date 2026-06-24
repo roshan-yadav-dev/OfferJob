@@ -1,4 +1,4 @@
-import toast from 'react-hot-toast';
+import { showError } from './toast';
 
 /**
  * Extracts error message from various error formats
@@ -53,7 +53,7 @@ export const handleApiError = (error, defaultMessage = 'An error occurred') => {
     ) {
         Object.values(error.response.data.errors).forEach((err) => {
             if (typeof err === 'string') {
-                toast.error(err);
+                showError(err);
             }
         });
         return;
@@ -67,7 +67,7 @@ export const handleApiError = (error, defaultMessage = 'An error occurred') => {
         error.response.data.errors.forEach((err) => {
             const message = typeof err === 'string' ? err : err?.msg;
             if (message) {
-                toast.error(message);
+                showError(message);
             }
         });
         return;
@@ -75,7 +75,7 @@ export const handleApiError = (error, defaultMessage = 'An error occurred') => {
 
     // Single message error
     const message = extractErrorMessage(error, defaultMessage);
-    toast.error(message);
+    showError(message);
 };
 
 /**

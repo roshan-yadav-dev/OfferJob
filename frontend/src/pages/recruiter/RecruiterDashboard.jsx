@@ -1,9 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
+import {
+    Briefcase,
+    FileText,
+    CheckCircle,
+    XCircle,
+} from 'lucide-react';
+
+import PageHeader from '../../components/common/PageHeader';
 import StatsCard from '../../components/dashboard/StatsCard';
-import Card from '../../components/common/Card';
-import { LoadingSpinner } from '../../components/common/LoadingStates';
+import JobCard from '../../components/jobs/JobCard';
+import { DashboardPageSkeleton } from '../../components/common/LoadingStates';
 import { getRecruiterDashboard, getRecruiterJobs } from '../../api/jobApi';
 import { handleApiError } from '../../utils/apiErrorHandler';
+import {
+    formatConversionRate,
+    formatRejectedInsight,
+} from '../../utils/dashboardInsights';
 
 function RecruiterDashboard() {
     const [stats, setStats] = useState({
@@ -58,18 +70,17 @@ function RecruiterDashboard() {
     }, []);
 
     if (loading) {
-        return <LoadingSpinner message="Loading dashboard..." />;
+        return <DashboardPageSkeleton />;
     }
 
     if (error) {
         return (
             <div className="space-y-8">
-                <div>
-                    <h1 className="text-4xl font-bold text-gray-800">
-                        Recruiter Dashboard 🚀
-                    </h1>
-                </div>
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+                <PageHeader title="Recruiter Dashboard" />
+                <div
+                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700"
+                    role="alert"
+                >
                     <p className="font-semibold">Error Loading Dashboard</p>
                     <p className="text-sm">{error}</p>
                 </div>
@@ -78,99 +89,77 @@ function RecruiterDashboard() {
     }
 
     return (
-        <div className="space-y-8">
-            {/* Header */}
-
-            <div>
-                <h1
-                    className="
-                        text-4xl
-                        font-bold
-                        text-gray-800
-                    "
-                >
-                    Recruiter Dashboard 🚀
-                </h1>
-
-                <p className="text-gray-500 mt-2">
-                    Manage jobs, candidates, and hiring analytics.
-                </p>
-            </div>
+        <div className="animate-fade-in-up space-y-8">
+            <PageHeader
+                title="Recruiter Dashboard"
+                description="Manage jobs, candidates, and hiring analytics."
+            />
 
             {/* Stats */}
 
-            <div
-                className="
-                    grid
-                    grid-cols-1
-                    md:grid-cols-2
-                    lg:grid-cols-4
-                    gap-6
-                "
-            >
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
                     title="Posted Jobs"
                     value={stats.postedJobs}
-                    icon="💼"
+                    subtitle={
+                        recentJobs.length > 0
+                            ? `${recentJobs.length} active listings`
+                            : 'Post your first job'
+                    }
+                    icon={Briefcase}
+                    color="blue"
                 />
 
                 <StatsCard
                     title="Applications"
                     value={stats.totalApplications}
-                    icon="📋"
+                    subtitle="Across all job listings"
+                    icon={FileText}
+                    color="blue"
                 />
 
                 <StatsCard
                     title="Shortlisted"
                     value={stats.shortlisted}
-                    icon="✅"
+                    subtitle={formatConversionRate(
+                        stats.shortlisted,
+                        stats.totalApplications,
+                    )}
+                    icon={CheckCircle}
+                    color="green"
                 />
 
-                <StatsCard title="Rejected" value={stats.rejected} icon="❌" />
+                <StatsCard
+                    title="Rejected"
+                    value={stats.rejected}
+                    subtitle={formatRejectedInsight(stats.rejected)}
+                    icon={XCircle}
+                    color="red"
+                />
             </div>
 
             {/* Recent Jobs */}
 
-            <div
-                className="
-                    bg-white
-                    rounded-xl
-                    shadow-md
-                    p-6
-                "
-            >
-                <h2 className="text-2xl font-bold mb-4">Recent Job Posts</h2>
+            <div className="rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-xl font-bold text-[#0f172a]">
+                    Recent Job Posts
+                </h2>
 
                 {recentJobs.length === 0 ? (
-                    <div className="text-center py-8">
-                        <p className="text-gray-500 text-lg">
+                    <div className="py-8 text-center">
+                        <p className="text-lg text-[#64748b]">
                             No jobs posted yet. Start by posting your first job!
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         {recentJobs.map((job) => (
-                            <div
+                            <JobCard
                                 key={job._id || job.id}
-                                className="
-                                    border
-                                    border-gray-200
-                                    rounded-lg
-                                    p-4
-                                "
-                            >
-                                <h3 className="font-bold text-lg">
-                                    {job.title}
-                                </h3>
-
-                                <p className="text-gray-500">
-                                    📍 {job.location}
-                                </p>
-
-                                <p className="text-blue-600 font-semibold mt-2">
-                                    Application Available
-                                </p>
-                            </div>
+                                job={job}
+                                compact
+                                showViewDetails={false}
+                            />
                         ))}
                     </div>
                 )}

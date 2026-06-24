@@ -1,9 +1,11 @@
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
 import Input from '../../components/common/Input';
+import Select from '../../components/common/Select';
 import Button from '../../components/common/Button';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/toast';
 import { signupUser } from '../../api/authApi';
 import { saveToken } from '../../services/tokenService';
 import { useAuth } from '../../context/AuthContext';
@@ -23,34 +25,27 @@ function Signup() {
         try {
             setLoading(true);
 
-            // Call backend register API
             const response = await signupUser(data);
 
-            // Save token
             saveToken(response.token);
-
-            // Save user in AuthContext
             login(response.user);
 
-            toast.success('Signup successful');
+            showSuccess('Account created successfully');
 
-            // Redirect to profile based on role for first-time profile completion
             if (response.user.role === 'recruiter') {
                 navigate('/recruiter/profile');
             } else {
                 navigate('/student/profile');
             }
         } catch (error) {
-            // Handle backend validation errors
             if (error.response?.data?.message) {
-                toast.error(error.response.data.message);
+                showError(error.response.data.message);
             } else if (error.response?.data?.errors) {
-                // Handle field-specific errors
                 Object.values(error.response.data.errors).forEach((err) => {
-                    toast.error(err);
+                    showError(err);
                 });
             } else {
-                toast.error('Signup failed. Please try again.');
+                showError('Signup failed. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -58,31 +53,28 @@ function Signup() {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[80vh]">
-            <div
-                className="
-                    bg-white
-                    shadow-md
-                    rounded-xl
-                    p-8
-                    w-full
-                    max-w-md
-                "
-            >
-                <h2 className="text-3xl font-bold mb-6 text-center">Signup</h2>
+        <div className="flex min-h-[80vh] items-center justify-center px-4 py-8">
+            <div className="animate-fade-in-up w-full max-w-md rounded-2xl border border-[#e2e8f0] bg-white p-8 shadow-sm">
+                <div className="mb-6 text-center">
+                    <h1 className="text-2xl font-bold text-[#0f172a]">
+                        Create your account
+                    </h1>
+                    <p className="mt-2 text-sm text-[#64748b]">
+                        Join as a student or recruiter to get started
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                     <Input
                         label="Full Name"
-                        placeholder="Enter full name"
+                        placeholder="Enter your full name"
                         name="name"
+                        required
                         register={(name) =>
                             register(name, {
                                 required: 'Full name is required',
-
                                 minLength: {
                                     value: 3,
-
                                     message:
                                         'Name must be at least 3 characters',
                                 },
@@ -94,33 +86,33 @@ function Signup() {
                     <Input
                         label="Email"
                         type="email"
-                        placeholder="Enter email"
+                        placeholder="you@example.com"
                         name="email"
+                        required
                         register={(name) =>
                             register(name, {
                                 required: 'Email is required',
-
                                 pattern: {
                                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-
                                     message: 'Invalid email address',
                                 },
                             })
                         }
                         error={errors.email}
                     />
+
                     <Input
                         label="Password"
                         type="password"
-                        placeholder="Enter password"
+                        placeholder="Create a password"
                         name="password"
+                        required
+                        helperText="Minimum 6 characters"
                         register={(name) =>
                             register(name, {
                                 required: 'Password is required',
-
                                 minLength: {
                                     value: 6,
-
                                     message:
                                         'Password must be at least 6 characters',
                                 },
@@ -129,37 +121,22 @@ function Signup() {
                         error={errors.password}
                     />
 
-                    <div className="flex flex-col gap-2">
-                        <label className="font-medium text-gray-700">
-                            Select Role
-                        </label>
-
-                        <select
-                            {...register('role', {
+                    <Select
+                        label="Role"
+                        name="role"
+                        required
+                        helperText="Choose how you'll use the platform"
+                        register={(name) =>
+                            register(name, {
                                 required: 'Please select a role',
-                            })}
-                            className="
-                                border
-                                border-gray-300
-                                rounded-lg
-                                px-4
-                                py-2
-                                outline-none
-                                focus:ring-2
-                                focus:ring-blue-500
-                            "
-                        >
-                            <option value="">Choose a role</option>
-                            <option value="student">Student</option>
-
-                            <option value="recruiter">Recruiter</option>
-                        </select>
-                        {errors.role && (
-                            <p className="text-red-500 text-sm">
-                                {errors.role.message}
-                            </p>
-                        )}
-                    </div>
+                            })
+                        }
+                        error={errors.role}
+                    >
+                        <option value="">Choose a role</option>
+                        <option value="student">Student</option>
+                        <option value="recruiter">Recruiter</option>
+                    </Select>
 
                     <Button
                         type="submit"
@@ -167,18 +144,18 @@ function Signup() {
                         className="w-full"
                         loading={loading}
                     >
-                        Signup
+                        Create Account
                     </Button>
                 </form>
 
-                <p className="text-center mt-4 text-gray-600">
+                <p className="mt-6 text-center text-sm text-[#64748b]">
                     Already have an account?{' '}
-                    <a
-                        href="/login"
-                        className="text-blue-500 hover:underline font-medium"
+                    <Link
+                        to="/login"
+                        className="font-medium text-[#2563eb] transition-colors duration-200 hover:text-[#1d4ed8]"
                     >
                         Login
-                    </a>
+                    </Link>
                 </p>
             </div>
         </div>

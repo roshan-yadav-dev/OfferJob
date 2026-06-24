@@ -30,28 +30,6 @@ services:
             retries: 3
             start_period: 60s
 
-    # Spring Boot Notification Service
-    notification-service:
-        build:
-            context: ./Mircoservices/notification-service
-            dockerfile: Dockerfile
-        container_name: job-platform-notification-service
-        env_file:
-            - ./Mircoservices/notification-service/.env
-        environment:
-            MONGODB_URI: mongodb+srv://Roshan:Roshan@cluster0.fie3eke.mongodb.net/notification_service
-            MONGODB_DATABASE: notification_service
-        ports:
-            - '8082:8082'
-        networks:
-            - job-platform
-        healthcheck:
-            test: curl -f http://localhost:8082/health || exit 1
-            interval: 30s
-            timeout: 10s
-            retries: 3
-            start_period: 60s
-
     # Backend Service (Node.js + Express)
     backend:
         build:
@@ -64,24 +42,33 @@ services:
             NODE_ENV: production
             PORT: 5000
             CORS_ORIGIN: http://frontend:3000
+            FRONTEND_URL: http://localhost:3000
             AI_SERVICE_URL: http://ai-service:8000/api/v1/ai
             AI_SERVICE_TIMEOUT: 30000
             AI_SERVICE_MAX_RETRIES: 2
             AI_SERVICE_RETRY_DELAY: 1000
             LOG_LEVEL: INFO
-            NOTIFICATION_SERVICE_URL: http://notification-service:8082
+            MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+            MAIL_PORT: ${MAIL_PORT:-587}
+            MAIL_USERNAME: ${MAIL_USERNAME}
+            MAIL_PASSWORD: ${MAIL_PASSWORD}
+            MAIL_FROM: ${MAIL_FROM}
         ports:
             - '5000:5000'
         depends_on:
             ai-service:
-                condition: service_healthy
-            notification-service:
                 condition: service_healthy
         networks:
             - job-platform
         volumes:
             - ./backend/uploads:/app/uploads
             - backend_logs:/app/logs
+        healthcheck:
+            test: curl -f http://localhost:5000/health || exit 1
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
 
     # Frontend Service (React + Vite)
     frontend:

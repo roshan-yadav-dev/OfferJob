@@ -29,6 +29,17 @@ const applicationSchema = new mongoose.Schema(
             type: Number,
             default: null,
         },
+
+        interviewDetails: {
+            type: {
+                interviewDate: String,
+                interviewTime: String,
+                interviewLocation: String,
+                notes: String,
+                invitedAt: Date,
+            },
+            default: null,
+        },
     },
     {
         timestamps: true,

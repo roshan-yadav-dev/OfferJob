@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema(
             default: 'student',
         },
 
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+
         resumeUrl: {
             type: String,
             default: null,
@@ -87,6 +92,16 @@ const userSchema = new mongoose.Schema(
 
         address: {
             type: String,
+            default: null,
+        },
+
+        resetPasswordToken: {
+            type: String,
+            default: null,
+        },
+
+        resetPasswordExpire: {
+            type: Date,
             default: null,
         },
     },

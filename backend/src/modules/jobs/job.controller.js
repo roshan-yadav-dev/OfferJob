@@ -7,6 +7,13 @@ const { createJob, getAllJobs, getJobById } = require('./job.service');
 
 // Create Job
 const createJobController = asyncHandler(async (req, res) => {
+    if (req.user.isActive === false) {
+        return res.status(403).json({
+            success: false,
+            message: 'Your account is suspended. Contact support.',
+        });
+    }
+
     const recruiter = await User.findById(req.user._id);
 
     const jobData = {

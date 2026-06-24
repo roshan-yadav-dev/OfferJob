@@ -1,19 +1,17 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { loginUser } from '../../api/authApi';
 import { saveToken } from '../../services/tokenService';
-
 import { useAuth } from '../../context/AuthContext';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/toast';
 
 function Login() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-
     const { login } = useAuth();
 
     const {
@@ -26,34 +24,29 @@ function Login() {
         try {
             setLoading(true);
 
-            // Call backend login API
             const response = await loginUser(data);
 
-            // Save user in AuthContext
             login(response.user);
-
-            // Save token
             saveToken(response.token);
 
-            toast.success('Login successful');
+            showSuccess('Login successful');
 
-            // Navigate by role
             if (response.user.role === 'recruiter') {
                 navigate('/recruiter/dashboard');
+            } else if (response.user.role === 'admin') {
+                navigate('/admin/dashboard');
             } else {
                 navigate('/student/dashboard');
             }
         } catch (error) {
-            // Handle backend validation errors
             if (error.response?.data?.message) {
-                toast.error(error.response.data.message);
+                showError(error.response.data.message);
             } else if (error.response?.data?.errors) {
-                // Handle field-specific errors
                 Object.values(error.response.data.errors).forEach((err) => {
-                    toast.error(err);
+                    showError(err);
                 });
             } else {
-                toast.error('Login failed. Please try again.');
+                showError('Login failed. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -61,25 +54,25 @@ function Login() {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[80vh]">
-            <div
-                className="
-                    bg-white
-                    shadow-md
-                    rounded-xl
-                    p-8
-                    w-full
-                    max-w-md
-                "
-            >
-                <h2 className="text-3xl font-bold mb-6 text-center">Login</h2>
+        <div className="flex min-h-[80vh] items-center justify-center px-4">
+            <div className="animate-fade-in-up w-full max-w-md rounded-2xl border border-[#e2e8f0] bg-white p-8 shadow-sm">
+                <div className="mb-6 text-center">
+                    <h1 className="text-2xl font-bold text-[#0f172a]">
+                        Welcome back
+                    </h1>
+                    <p className="mt-2 text-sm text-[#64748b]">
+                        Sign in to continue to your dashboard
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                     <Input
                         label="Email"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="you@example.com"
                         name="email"
+                        required
+                        helperText="Use the email associated with your account"
                         register={(name) =>
                             register(name, {
                                 required: 'Email is required',
@@ -97,6 +90,7 @@ function Login() {
                         type="password"
                         placeholder="Enter your password"
                         name="password"
+                        required
                         register={(name) =>
                             register(name, {
                                 required: 'Password is required',
@@ -120,14 +114,14 @@ function Login() {
                     </Button>
                 </form>
 
-                <p className="text-center mt-4 text-gray-600">
-                    Don't have an account?{' '}
-                    <a
-                        href="/signup"
-                        className="text-blue-500 hover:underline font-medium"
+                <p className="mt-6 text-center text-sm text-[#64748b]">
+                    Don&apos;t have an account?{' '}
+                    <Link
+                        to="/signup"
+                        className="font-medium text-[#2563eb] transition-colors duration-200 hover:text-[#1d4ed8]"
                     >
                         Sign up
-                    </a>
+                    </Link>
                 </p>
             </div>
         </div>

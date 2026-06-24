@@ -1,8 +1,18 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const generateToken = require('../../utils/generateToken');
 
-const { registerUser, loginUser } = require('./auth.service');
+const {
+    registerUser,
+    loginUser,
+    requestPasswordReset,
+    resetPassword,
+} = require('./auth.service');
 const { updateUserProfile, getUserProfile } = require('../users/user.service');
+const {
+    dispatchEmail,
+    sendWelcomeEmail,
+    sendPasswordResetEmail,
+} = require('../../services/emailService');
 
 // Register Controller
 const register = async (req, res) => {
@@ -10,6 +20,14 @@ const register = async (req, res) => {
         const user = await registerUser(req.body);
 
         const token = generateToken(user._id);
+
+        dispatchEmail(() =>
+            sendWelcomeEmail({
+                userId: user._id,
+                email: user.email,
+                name: user.name,
+            }),
+        );
 
         res.status(201).json({
             success: true,
@@ -100,10 +118,47 @@ const updateProfile = asyncHandler(async (req, res) => {
     });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const resetData = await requestPasswordReset(email);
+
+    if (resetData) {
+        dispatchEmail(() =>
+            sendPasswordResetEmail({
+                userId: resetData.user._id,
+                email: resetData.user.email,
+                name: resetData.user.name,
+                resetToken: resetData.resetToken,
+            }),
+        );
+    }
+
+    res.status(200).json({
+        success: true,
+        message:
+            'If an account exists with that email, a password reset link has been sent.',
+    });
+});
+
+const resetPasswordController = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    await resetPassword(token, password);
+
+    res.status(200).json({
+        success: true,
+        message: 'Password reset successful. You can now log in.',
+    });
+});
+
 module.exports = {
     register,
     login,
     getMe,
     getProfile,
     updateProfile,
+    forgotPassword,
+    resetPasswordController,
 };

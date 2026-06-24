@@ -5,6 +5,7 @@ const {
     getJobApplicantsController,
     getDashboardStatsController,
     updateApplicationStatusController,
+    sendInterviewInviteController,
 } = require('./recruiter.controller');
 
 const protect = require('../../middleware/authMiddleware');
@@ -26,6 +27,12 @@ router.get('/jobs/:jobId/applications', getJobApplicantsController);
 router.patch(
     '/applications/:applicationId/status',
     updateApplicationStatusController,
+);
+
+// Send Interview Invitation
+router.post(
+    '/applications/:applicationId/interview-invite',
+    sendInterviewInviteController,
 );
 
 // Dashboard Stats
