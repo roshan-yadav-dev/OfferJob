@@ -219,7 +219,7 @@ function getTransporter() {
         transporter = nodemailer.createTransport({
             host: env.MAIL_HOST,
             port: env.MAIL_PORT,
-            secure: env.MAIL_PORT === 587,
+            secure: env.MAIL_PORT === 485,
             auth: {
                 user: env.MAIL_USERNAME,
                 pass: env.MAIL_PASSWORD,
