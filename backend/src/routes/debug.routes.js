@@ -2,7 +2,7 @@ const express = require('express');
 
 const logger = require('../config/logger');
 const { sendDebugEmail } = require('../services/emailService');
-const { getSmtpDiagnostics } = require('../services/smtpTransporter');
+const { getBrevoDiagnostics } = require('../services/brevoClient');
 const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
@@ -41,7 +41,7 @@ router.get(
 router.get(
     '/smtp',
     asyncHandler(async (req, res) => {
-        const diagnostics = await getSmtpDiagnostics();
+        const diagnostics = await getBrevoDiagnostics();
 
         res.status(200).json(diagnostics);
     }),

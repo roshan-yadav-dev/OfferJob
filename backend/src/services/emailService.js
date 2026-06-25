@@ -5,11 +5,12 @@ const logger = require('../config/logger');
 const Notification = require('../modules/notifications/notification.model');
 const emailTemplates = require('../templates/emails');
 const {
-    getTransporter,
-    getTransporterConfigSummary,
+    BREVO_SEND_EMAIL_PATH,
+    getBrevoClient,
+    getBrevoConfigSummary,
     getMailFromSender,
-    isSmtpConfigured,
-} = require('./smtpTransporter');
+    isBrevoConfigured,
+} = require('./brevoClient');
 
 const MAX_SEND_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 1000;
@@ -72,22 +73,16 @@ function createBrevoSendResult({ to, response }) {
 }
 
 async function sendWithRetry({ to, subject, html }) {
-    const transporter = getTransporter();
+    const brevoClient = getBrevoClient();
 
-    if (!transporter) {
-        throw new Error('SMTP is not configured');
+    if (!brevoClient) {
+        throw new Error('Brevo API is not configured');
     }
 
     let lastError = null;
 
     for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt += 1) {
-        const mailOptions = {
-            from: env.MAIL_FROM,
-            to,
-            subject,
-            html,
-        };
-        const requestPayload = createBrevoSendPayload(mailOptions);
+        const requestPayload = createBrevoSendPayload({ to, subject, html });
 
         logger.info('Brevo email API request started', {
             attempt,
@@ -95,12 +90,15 @@ async function sendWithRetry({ to, subject, html }) {
             recipient: to,
             sender: env.MAIL_FROM,
             subject,
-            brevo_endpoint: '/smtp/email',
-            brevo_config: getTransporterConfigSummary(),
+            brevo_endpoint: BREVO_SEND_EMAIL_PATH,
+            brevo_config: getBrevoConfigSummary(),
         });
 
         try {
-            const response = await transporter.post('/smtp/email', requestPayload);
+            const response = await brevoClient.post(
+                BREVO_SEND_EMAIL_PATH,
+                requestPayload,
+            );
             const info = createBrevoSendResult({ to, response });
 
             logger.info('Brevo email API request success', {
@@ -362,8 +360,8 @@ async function sendApplicationStatusEmail({
 async function sendTestEmail({ email }) {
     return sendWithRetry({
         to: email,
-        subject: `${env.APP_NAME} - SMTP Test Email`,
-        html: `<p>This is a test email from <strong>${env.APP_NAME}</strong>.</p><p>If you received this, SMTP email delivery is configured correctly.</p>`,
+        subject: `${env.APP_NAME} - Brevo Test Email`,
+        html: `<p>This is a test email from <strong>${env.APP_NAME}</strong>.</p><p>If you received this, Brevo email delivery is configured correctly.</p>`,
     });
 }
 
@@ -374,14 +372,14 @@ async function sendDebugEmail() {
     const sender = getMailFromSender();
 
     return sendWithRetry({
-        to: env.MAIL_USERNAME || sender.email,
-        subject: 'SMTP Debug Test',
+        to: sender.email,
+        subject: 'Brevo Debug Test',
         html: `<p>Timestamp: ${timestamp}</p><p>Server Time: ${serverTime}</p><p>Random UUID: ${debugUuid}</p>`,
     });
 }
 
 function isEmailServiceConfigured() {
-    return isSmtpConfigured();
+    return isBrevoConfigured();
 }
 
 module.exports = {

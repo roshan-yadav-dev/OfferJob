@@ -8,6 +8,6 @@ services:
             - '8082:8082'
 
         environment:
-            MAIL_USERNAME: ${MAIL_USERNAME}
-            MAIL_PASSWORD: ${MAIL_PASSWORD}
+            BREVO_API_KEY: ${BREVO_API_KEY}
+            MAIL_FROM: ${MAIL_FROM}
             MONGODB_URI: ${MONGODB_URI}

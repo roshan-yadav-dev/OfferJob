@@ -19,7 +19,7 @@ private final NotificationLogService logService;
 
 private final TemplateEngine templateEngine;
 
-private final ResendEmailService resendEmailService;
+private final BrevoEmailService brevoEmailService;
 
 @Override
 public void sendEmail(
@@ -28,7 +28,7 @@ public void sendEmail(
 
     try {
 
-        resendEmailService.sendEmail(
+        brevoEmailService.sendEmail(
                 request.getTo(),
                 request.getSubject(),
                 request.getMessage()
@@ -92,7 +92,7 @@ public void sendApplicationStatusEmail(
                         context
                 );
 
-        resendEmailService.sendEmail(
+        brevoEmailService.sendEmail(
                 request.getTo(),
                 "Application Status Update",
                 htmlContent

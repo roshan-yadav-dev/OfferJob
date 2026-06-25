@@ -11,15 +11,6 @@ public class EnvCheck {
     @Value("${MONGODB_URI:NOT_FOUND}")
     private String mongoUri;
 
-    @Value("${MAIL_HOST:NOT_FOUND}")
-    private String mailHost;
-
-    @Value("${MAIL_PORT:NOT_FOUND}")
-    private String mailPort;
-
-    @Value("${MAIL_USERNAME:NOT_FOUND}")
-    private String mailUsername;
-
     @PostConstruct
     public void printEnv() {
 
@@ -36,19 +27,6 @@ public class EnvCheck {
                             Math.min(25, mongoUri.length())
                     )
             );
-        }
-    }
-
-    @PostConstruct
-    public void printMailConfig() {
-
-        System.out.println("MAIL_HOST = " + mailHost);
-        System.out.println("MAIL_PORT = " + mailPort);
-
-        if (!mailUsername.equals("NOT_FOUND")) {
-            System.out.println("MAIL_USERNAME PRESENT = true");
-        } else {
-            System.out.println("MAIL_USERNAME PRESENT = false");
         }
     }
 }

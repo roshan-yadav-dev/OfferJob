@@ -1,6 +1,6 @@
 package com.jobportal.notification_service.service;
 
-public interface ResendEmailService {
+public interface BrevoEmailService {
 
     void sendEmail(
         String to,

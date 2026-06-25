@@ -5,7 +5,7 @@ const axios = require('axios');
 const env = require('../config/env');
 const logger = require('../config/logger');
 
-let transporter = null;
+let brevoClient = null;
 
 const BREVO_API_BASE_URL = 'https://api.brevo.com/v3';
 const BREVO_SEND_EMAIL_PATH = '/smtp/email';
@@ -42,31 +42,28 @@ function getMailFromSender(mailFrom = env.MAIL_FROM) {
     };
 }
 
-function isSmtpConfigured() {
+function isBrevoConfigured() {
     const sender = getMailFromSender();
 
-    return Boolean(
-        env.BREVO_API_KEY &&
-        sender.email,
-    );
+    return Boolean(env.BREVO_API_KEY && sender.email);
 }
 
-function getTransporterConfigSummary() {
+function getBrevoConfigSummary() {
     const sender = getMailFromSender();
 
     return {
         provider: 'brevo',
-        baseURL: BREVO_API_BASE_URL,
-        sendEmailPath: BREVO_SEND_EMAIL_PATH,
-        requestTimeout: BREVO_REQUEST_TIMEOUT_MS,
-        apiKeyPresent: Boolean(env.BREVO_API_KEY),
-        senderEmail: sender.email || null,
-        senderName: sender.name || null,
-        mailFrom: env.MAIL_FROM,
+        base_url: BREVO_API_BASE_URL,
+        send_email_path: BREVO_SEND_EMAIL_PATH,
+        request_timeout: BREVO_REQUEST_TIMEOUT_MS,
+        api_key_present: Boolean(env.BREVO_API_KEY),
+        sender_email: sender.email || null,
+        sender_name: sender.name || null,
+        mail_from: env.MAIL_FROM,
     };
 }
 
-async function resolveSmtpDns(host = BREVO_API_HOST) {
+async function resolveBrevoApiDns(host = BREVO_API_HOST) {
     const [ipv4Result, ipv6Result, lookupResult] = await Promise.all([
         dns.promises
             .resolve4(host)
@@ -117,7 +114,7 @@ async function resolveSmtpDns(host = BREVO_API_HOST) {
     return diagnostics;
 }
 
-function connectToApiHost({
+function connectToBrevoApiHost({
     host,
     port = BREVO_API_PORT,
     timeout = BREVO_REQUEST_TIMEOUT_MS,
@@ -130,7 +127,7 @@ function connectToApiHost({
 
         let settled = false;
 
-        function finish(smtpReachable, error = null) {
+        function finish(apiReachable, error = null) {
             if (settled) {
                 return;
             }
@@ -155,7 +152,7 @@ function connectToApiHost({
                 });
             }
 
-            resolve(smtpReachable);
+            resolve(apiReachable);
         }
 
         socket.setTimeout(timeout);
@@ -167,12 +164,12 @@ function connectToApiHost({
     });
 }
 
-async function getSmtpDiagnostics() {
+async function getBrevoDiagnostics() {
     const sender = getMailFromSender();
-    const dnsDiagnostics = await resolveSmtpDns();
+    const dnsDiagnostics = await resolveBrevoApiDns();
 
     return {
-        smtpConfigured: isSmtpConfigured(),
+        configured: isBrevoConfigured(),
         provider: 'brevo',
         host: BREVO_API_HOST,
         port: BREVO_API_PORT,
@@ -180,8 +177,8 @@ async function getSmtpDiagnostics() {
         mailFrom: env.MAIL_FROM,
         senderEmail: sender.email || null,
         dnsResolved: Boolean(dnsDiagnostics.resolvedIp),
-        smtpReachable: dnsDiagnostics.resolvedIp
-            ? await connectToApiHost({
+        apiReachable: dnsDiagnostics.resolvedIp
+            ? await connectToBrevoApiHost({
                   host: dnsDiagnostics.resolvedIp,
                   port: BREVO_API_PORT,
               })
@@ -189,17 +186,17 @@ async function getSmtpDiagnostics() {
     };
 }
 
-function getTransporter() {
-    if (!isSmtpConfigured()) {
+function getBrevoClient() {
+    if (!isBrevoConfigured()) {
         return null;
     }
 
-    if (!transporter) {
+    if (!brevoClient) {
         logger.info('Creating Brevo API client', {
-            brevo_config: getTransporterConfigSummary(),
+            brevo_config: getBrevoConfigSummary(),
         });
 
-        transporter = axios.create({
+        brevoClient = axios.create({
             baseURL: BREVO_API_BASE_URL,
             timeout: BREVO_REQUEST_TIMEOUT_MS,
             headers: {
@@ -210,14 +207,15 @@ function getTransporter() {
         });
     }
 
-    return transporter;
+    return brevoClient;
 }
 
 module.exports = {
-    getTransporter,
-    getSmtpDiagnostics,
-    getTransporterConfigSummary,
+    BREVO_SEND_EMAIL_PATH,
+    getBrevoClient,
+    getBrevoDiagnostics,
+    getBrevoConfigSummary,
     getMailFromSender,
-    isSmtpConfigured,
-    resolveSmtpDns,
+    isBrevoConfigured,
+    resolveBrevoApiDns,
 };
