@@ -24,7 +24,24 @@ const registerUser = async (userData) => {
 };
 
 // Login User
+// Login User
 const loginUser = async (email, password) => {
+    // Super Admin Login
+    if (email === process.env.ADMIN_EMAIL) {
+        if (password !== process.env.ADMIN_PASSWORD) {
+            throw new Error('Invalid credentials');
+        }
+
+        return {
+            _id: 'admin',
+            name: 'Administrator',
+            email: process.env.ADMIN_EMAIL,
+            role: 'admin',
+            isActive: true,
+        };
+    }
+
+    // Normal User Login
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -43,7 +60,6 @@ const loginUser = async (email, password) => {
 
     return user;
 };
-
 const requestPasswordReset = async (email) => {
     const user = await User.findOne({ email });
 
