@@ -53,7 +53,8 @@ module.exports = {
     APP_NAME,
     EMAIL_SENDER_NAME: APP_NAME,
 
-    // Email (SMTP)
+    // Email (Brevo)
+    BREVO_API_KEY: process.env.BREVO_API_KEY || '',
     MAIL_HOST: process.env.MAIL_HOST || 'smtp-relay.brevo.com',
     MAIL_PORT: parseInt(process.env.MAIL_PORT || '587', 10),
     MAIL_USERNAME: process.env.MAIL_USERNAME || '',

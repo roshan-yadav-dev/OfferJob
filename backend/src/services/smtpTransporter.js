@@ -1,48 +1,72 @@
 const net = require('net');
-const nodemailer = require('nodemailer');
 const dns = require('dns');
+const axios = require('axios');
 
 const env = require('../config/env');
 const logger = require('../config/logger');
 
 let transporter = null;
 
-const SMTP_TIMEOUT_MS = 30000;
+const BREVO_API_BASE_URL = 'https://api.brevo.com/v3';
+const BREVO_SEND_EMAIL_PATH = '/smtp/email';
+const BREVO_REQUEST_TIMEOUT_MS = 30000;
+const BREVO_API_HOST = new URL(BREVO_API_BASE_URL).hostname;
+const BREVO_API_PORT = 443;
 
-function isSecureSmtpConnection() {
-    return env.MAIL_PORT === 465;
-}
+function getMailFromSender(mailFrom = env.MAIL_FROM) {
+    const trimmedMailFrom = (mailFrom || '').trim();
 
-function shouldRequireTls() {
-    return !isSecureSmtpConnection();
+    if (!trimmedMailFrom) {
+        return {
+            email: '',
+            name: '',
+        };
+    }
+
+    const mailboxMatch = trimmedMailFrom.match(
+        /^(?:"?([^"]*)"?\s*)?<([^>]+)>$/,
+    );
+
+    if (mailboxMatch) {
+        const [, rawName = '', rawEmail = ''] = mailboxMatch;
+
+        return {
+            email: rawEmail.trim(),
+            name: rawName.trim() || env.EMAIL_SENDER_NAME,
+        };
+    }
+
+    return {
+        email: trimmedMailFrom,
+        name: env.EMAIL_SENDER_NAME,
+    };
 }
 
 function isSmtpConfigured() {
+    const sender = getMailFromSender();
+
     return Boolean(
-        env.MAIL_HOST &&
-        env.MAIL_PORT &&
-        env.MAIL_USERNAME &&
-        env.MAIL_PASSWORD &&
-        env.MAIL_FROM,
+        env.BREVO_API_KEY &&
+        sender.email,
     );
 }
 
 function getTransporterConfigSummary() {
+    const sender = getMailFromSender();
+
     return {
-        host: env.MAIL_HOST,
-        port: env.MAIL_PORT,
-        secure: isSecureSmtpConnection(),
-        requireTLS: shouldRequireTls(),
-        connectionTimeout: SMTP_TIMEOUT_MS,
-        greetingTimeout: SMTP_TIMEOUT_MS,
-        socketTimeout: SMTP_TIMEOUT_MS,
-        usernamePresent: Boolean(env.MAIL_USERNAME),
-        passwordPresent: Boolean(env.MAIL_PASSWORD),
+        provider: 'brevo',
+        baseURL: BREVO_API_BASE_URL,
+        sendEmailPath: BREVO_SEND_EMAIL_PATH,
+        requestTimeout: BREVO_REQUEST_TIMEOUT_MS,
+        apiKeyPresent: Boolean(env.BREVO_API_KEY),
+        senderEmail: sender.email || null,
+        senderName: sender.name || null,
         mailFrom: env.MAIL_FROM,
     };
 }
 
-async function resolveSmtpDns(host = env.MAIL_HOST) {
+async function resolveSmtpDns(host = BREVO_API_HOST) {
     const [ipv4Result, ipv6Result, lookupResult] = await Promise.all([
         dns.promises
             .resolve4(host)
@@ -79,8 +103,8 @@ async function resolveSmtpDns(host = env.MAIL_HOST) {
         lookupError: lookupResult.error?.message || null,
     };
 
-    logger.info('SMTP DNS diagnostics', {
-        smtp_host: diagnostics.host,
+    logger.info('Brevo API DNS diagnostics', {
+        api_host: diagnostics.host,
         ipv4_addresses: diagnostics.ipv4Addresses,
         ipv6_addresses: diagnostics.ipv6Addresses,
         resolved_ip: diagnostics.resolvedIp,
@@ -93,7 +117,11 @@ async function resolveSmtpDns(host = env.MAIL_HOST) {
     return diagnostics;
 }
 
-function connectToSmtpHost({ host, port, timeout = SMTP_TIMEOUT_MS }) {
+function connectToApiHost({
+    host,
+    port = BREVO_API_PORT,
+    timeout = BREVO_REQUEST_TIMEOUT_MS,
+}) {
     return new Promise((resolve) => {
         const socket = net.connect({
             host,
@@ -111,19 +139,19 @@ function connectToSmtpHost({ host, port, timeout = SMTP_TIMEOUT_MS }) {
             socket.destroy();
 
             if (error) {
-                logger.error('Direct SMTP socket test failed', {
-                    smtp_host: env.MAIL_HOST,
-                    smtp_ip: host,
-                    smtp_port: port,
+                logger.error('Direct Brevo API socket test failed', {
+                    api_host: BREVO_API_HOST,
+                    api_ip: host,
+                    api_port: port,
                     error_message: error.message,
                     error_code: error.code || null,
                     stack: error.stack || null,
                 });
             } else {
-                logger.info('Direct SMTP socket test succeeded', {
-                    smtp_host: env.MAIL_HOST,
-                    smtp_ip: host,
-                    smtp_port: port,
+                logger.info('Direct Brevo API socket test succeeded', {
+                    api_host: BREVO_API_HOST,
+                    api_ip: host,
+                    api_port: port,
                 });
             }
 
@@ -133,27 +161,29 @@ function connectToSmtpHost({ host, port, timeout = SMTP_TIMEOUT_MS }) {
         socket.setTimeout(timeout);
         socket.once('connect', () => finish(true));
         socket.once('timeout', () =>
-            finish(false, new Error('SMTP socket connection timed out')),
+            finish(false, new Error('Brevo API socket connection timed out')),
         );
         socket.once('error', (error) => finish(false, error));
     });
 }
 
 async function getSmtpDiagnostics() {
+    const sender = getMailFromSender();
     const dnsDiagnostics = await resolveSmtpDns();
 
     return {
         smtpConfigured: isSmtpConfigured(),
-        host: env.MAIL_HOST,
-        port: env.MAIL_PORT,
-        usernamePresent: Boolean(env.MAIL_USERNAME),
-        passwordPresent: Boolean(env.MAIL_PASSWORD),
+        provider: 'brevo',
+        host: BREVO_API_HOST,
+        port: BREVO_API_PORT,
+        apiKeyPresent: Boolean(env.BREVO_API_KEY),
         mailFrom: env.MAIL_FROM,
+        senderEmail: sender.email || null,
         dnsResolved: Boolean(dnsDiagnostics.resolvedIp),
         smtpReachable: dnsDiagnostics.resolvedIp
-            ? await connectToSmtpHost({
+            ? await connectToApiHost({
                   host: dnsDiagnostics.resolvedIp,
-                  port: env.MAIL_PORT,
+                  port: BREVO_API_PORT,
               })
             : false,
     };
@@ -165,22 +195,18 @@ function getTransporter() {
     }
 
     if (!transporter) {
-        logger.info('Creating SMTP transporter', {
-            transporter_config: getTransporterConfigSummary(),
+        logger.info('Creating Brevo API client', {
+            brevo_config: getTransporterConfigSummary(),
         });
 
-        transporter = nodemailer.createTransport({
-            host: env.MAIL_HOST,
-            port: env.MAIL_PORT,
-            secure: isSecureSmtpConnection(),
-            requireTLS: shouldRequireTls(),
-            auth: {
-                user: env.MAIL_USERNAME,
-                pass: env.MAIL_PASSWORD,
+        transporter = axios.create({
+            baseURL: BREVO_API_BASE_URL,
+            timeout: BREVO_REQUEST_TIMEOUT_MS,
+            headers: {
+                accept: 'application/json',
+                'content-type': 'application/json',
+                'api-key': env.BREVO_API_KEY,
             },
-            connectionTimeout: SMTP_TIMEOUT_MS,
-            greetingTimeout: SMTP_TIMEOUT_MS,
-            socketTimeout: SMTP_TIMEOUT_MS,
         });
     }
 
@@ -191,6 +217,7 @@ module.exports = {
     getTransporter,
     getSmtpDiagnostics,
     getTransporterConfigSummary,
+    getMailFromSender,
     isSmtpConfigured,
     resolveSmtpDns,
 };

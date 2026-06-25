@@ -7,6 +7,7 @@ const emailTemplates = require('../templates/emails');
 const {
     getTransporter,
     getTransporterConfigSummary,
+    getMailFromSender,
     isSmtpConfigured,
 } = require('./smtpTransporter');
 
@@ -40,6 +41,36 @@ async function createNotificationRecord({
     });
 }
 
+function createBrevoSendPayload({ to, subject, html }) {
+    const sender = getMailFromSender();
+
+    return {
+        sender: {
+            email: sender.email,
+            ...(sender.name ? { name: sender.name } : {}),
+        },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+    };
+}
+
+function createBrevoSendResult({ to, response }) {
+    const sender = getMailFromSender();
+
+    return {
+        accepted: [to],
+        rejected: [],
+        response: response?.data || null,
+        messageId: response?.data?.messageId || null,
+        envelope: {
+            from: sender.email || env.MAIL_FROM,
+            to: [to],
+        },
+        status: response?.status || null,
+    };
+}
+
 async function sendWithRetry({ to, subject, html }) {
     const transporter = getTransporter();
 
@@ -56,34 +87,31 @@ async function sendWithRetry({ to, subject, html }) {
             subject,
             html,
         };
+        const requestPayload = createBrevoSendPayload(mailOptions);
 
-        logger.info('SMTP sendMail starting', {
+        logger.info('Brevo email API request started', {
             attempt,
             max_attempts: MAX_SEND_ATTEMPTS,
             recipient: to,
             sender: env.MAIL_FROM,
             subject,
-            smtp_host: env.MAIL_HOST,
-            smtp_port: env.MAIL_PORT,
-            transporter_config: getTransporterConfigSummary(),
+            brevo_endpoint: '/smtp/email',
+            brevo_config: getTransporterConfigSummary(),
         });
 
         try {
-            console.log("========== EMAIL SEND START ==========");
-            console.log("To:", mailOptions.to);
-            console.log("Subject:", mailOptions.subject);
-            console.log("Time:", new Date().toISOString());
+            const response = await transporter.post('/smtp/email', requestPayload);
+            const info = createBrevoSendResult({ to, response });
 
-            const info = await transporter.sendMail(mailOptions);
-
-            console.log("========== EMAIL SEND SUCCESS ==========");
-            console.log(info);
-
-            logger.info('SMTP sendMail success', {
+            logger.info('Brevo email API request success', {
                 attempt,
                 recipient: to,
                 sender: env.MAIL_FROM,
                 subject,
+                http_status: response.status,
+                brevo_response: response.data || null,
+                message_id: info?.messageId || null,
+                success: true,
                 accepted: info?.accepted || [],
                 rejected: info?.rejected || [],
                 response: info?.response || null,
@@ -93,19 +121,18 @@ async function sendWithRetry({ to, subject, html }) {
 
             return info;
         } catch (error) {
-            console.error("========== EMAIL SEND FAILED ==========");
-            console.error(error);
-
             lastError = error;
 
-            logger.error('SMTP sendMail failed', {
+            logger.error('Brevo email API request failed', {
                 attempt,
                 max_attempts: MAX_SEND_ATTEMPTS,
                 recipient: to,
                 sender: env.MAIL_FROM,
                 subject,
-                smtp_host: env.MAIL_HOST,
-                smtp_port: env.MAIL_PORT,
+                http_status: error.response?.status || null,
+                brevo_response: error.response?.data || null,
+                message_id: error.response?.data?.messageId || null,
+                success: false,
                 error_message: error.message,
                 error_code: error.code || null,
                 error_command: error.command || null,
@@ -344,9 +371,10 @@ async function sendDebugEmail() {
     const timestamp = new Date().toISOString();
     const serverTime = new Date().toString();
     const debugUuid = randomUUID();
+    const sender = getMailFromSender();
 
     return sendWithRetry({
-        to: env.MAIL_USERNAME,
+        to: env.MAIL_USERNAME || sender.email,
         subject: 'SMTP Debug Test',
         html: `<p>Timestamp: ${timestamp}</p><p>Server Time: ${serverTime}</p><p>Random UUID: ${debugUuid}</p>`,
     });
