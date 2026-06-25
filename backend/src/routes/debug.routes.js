@@ -1,12 +1,8 @@
 const express = require('express');
 
-const env = require('../config/env');
 const logger = require('../config/logger');
-const { sendTestEmail } = require('../services/emailService');
-const {
-    getSmtpDiagnostics,
-    isSmtpConfigured,
-} = require('../services/smtpTransporter');
+const { sendDebugEmail } = require('../services/emailService');
+const { getSmtpDiagnostics } = require('../services/smtpTransporter');
 const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
@@ -14,19 +10,8 @@ const router = express.Router();
 router.get(
     '/email',
     asyncHandler(async (req, res) => {
-        if (!isSmtpConfigured()) {
-            return res.status(503).json({
-                success: false,
-                messageId: null,
-                accepted: [],
-                rejected: [],
-                response: 'SMTP is not configured',
-                envelope: null,
-            });
-        }
-
         try {
-            const result = await sendTestEmail({ email: env.MAIL_USERNAME });
+            const result = await sendDebugEmail();
 
             return res.status(200).json({
                 success: true,
@@ -46,17 +31,8 @@ router.get(
 
             return res.status(500).json({
                 success: false,
-                messageId: null,
-                accepted: [],
-                rejected: [],
-                response: null,
-                envelope: null,
-                error: {
-                    message: error.message,
-                    code: error.code || null,
-                    command: error.command || null,
-                    stack: error.stack || null,
-                },
+                error: error.message,
+                stack: error.stack,
             });
         }
     }),

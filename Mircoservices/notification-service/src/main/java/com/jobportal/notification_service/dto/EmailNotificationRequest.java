@@ -16,4 +16,8 @@ public class EmailNotificationRequest {
 
     @NotBlank(message = "Message is required")
     private String message;
+
+    public String getTo() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

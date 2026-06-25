@@ -187,52 +187,10 @@ function getTransporter() {
     return transporter;
 }
 
-async function verifySmtpConnection() {
-    if (!isSmtpConfigured()) {
-        console.log('SMTP Verification Failed');
-        logger.error('SMTP verification failed', {
-            error_message:
-                'SMTP environment variables are not fully configured',
-        });
-        return false;
-    }
-
-    const dnsDiagnostics = await resolveSmtpDns();
-
-    logger.info('SMTP verification starting', {
-        smtp_host: env.MAIL_HOST,
-        resolved_ip: dnsDiagnostics.resolvedIp,
-        family: dnsDiagnostics.family,
-        transporter_config: getTransporterConfigSummary(),
-    });
-
-    try {
-        await getTransporter().verify();
-        console.log('SMTP Server Ready');
-        logger.info('SMTP connection verified', {
-            smtp_host: env.MAIL_HOST,
-            resolved_ip: dnsDiagnostics.resolvedIp,
-            family: dnsDiagnostics.family,
-            transporter_config: getTransporterConfigSummary(),
-        });
-        return true;
-    } catch (error) {
-        console.log('SMTP Verification Failed');
-        logger.error('SMTP verification failed', {
-            error_message: error.message,
-            error_code: error.code || null,
-            error_command: error.command || null,
-            stack: error.stack || null,
-        });
-        return false;
-    }
-}
-
 module.exports = {
     getTransporter,
     getSmtpDiagnostics,
     getTransporterConfigSummary,
     isSmtpConfigured,
     resolveSmtpDns,
-    verifySmtpConnection,
 };

@@ -1,11 +1,9 @@
 const app = require('./app');
 const connectDB = require('./config/db');
 const config = require('./config/env');
-const { verifySmtpConnection } = require('./services/smtpTransporter');
 
 const startServer = async () => {
     await connectDB();
-    await verifySmtpConnection();
 
     const PORT = config.PORT || 5000;
 

@@ -1,3 +1,5 @@
+const { randomUUID } = require('crypto');
+
 const env = require('../config/env');
 const logger = require('../config/logger');
 const Notification = require('../modules/notifications/notification.model');
@@ -67,22 +69,33 @@ async function sendWithRetry({ to, subject, html }) {
         });
 
         try {
-            const result = await transporter.sendMail(mailOptions);
+            console.log("========== EMAIL SEND START ==========");
+            console.log("To:", mailOptions.to);
+            console.log("Subject:", mailOptions.subject);
+            console.log("Time:", new Date().toISOString());
+
+            const info = await transporter.sendMail(mailOptions);
+
+            console.log("========== EMAIL SEND SUCCESS ==========");
+            console.log(info);
 
             logger.info('SMTP sendMail success', {
                 attempt,
                 recipient: to,
                 sender: env.MAIL_FROM,
                 subject,
-                accepted: result?.accepted || [],
-                rejected: result?.rejected || [],
-                response: result?.response || null,
-                messageId: result?.messageId || null,
-                envelope: result?.envelope || null,
+                accepted: info?.accepted || [],
+                rejected: info?.rejected || [],
+                response: info?.response || null,
+                messageId: info?.messageId || null,
+                envelope: info?.envelope || null,
             });
 
-            return result;
+            return info;
         } catch (error) {
+            console.error("========== EMAIL SEND FAILED ==========");
+            console.error(error);
+
             lastError = error;
 
             logger.error('SMTP sendMail failed', {
@@ -327,6 +340,18 @@ async function sendTestEmail({ email }) {
     });
 }
 
+async function sendDebugEmail() {
+    const timestamp = new Date().toISOString();
+    const serverTime = new Date().toString();
+    const debugUuid = randomUUID();
+
+    return sendWithRetry({
+        to: env.MAIL_USERNAME,
+        subject: 'SMTP Debug Test',
+        html: `<p>Timestamp: ${timestamp}</p><p>Server Time: ${serverTime}</p><p>Random UUID: ${debugUuid}</p>`,
+    });
+}
+
 function isEmailServiceConfigured() {
     return isSmtpConfigured();
 }
@@ -340,5 +365,6 @@ module.exports = {
     sendInterviewInviteEmail,
     sendApplicationStatusEmail,
     sendTestEmail,
+    sendDebugEmail,
     isEmailServiceConfigured,
 };
